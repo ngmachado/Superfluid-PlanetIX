@@ -1,0 +1,11 @@
+{
+  "name": "Superfluid-PlanetIX",
+  "version": "1.0.0",
+  "main": "index.js",
+  "repository": "https://github.com/ngmachado/Superfluid-PlanetIX",
+  "author": "Axe <ngsmo@iscte-iul.pt>",
+  "license": "MIT",
+  "dependencies": {
+    "@superfluid-finance/ethereum-contracts": "^1.5.0"
+  }
+}
