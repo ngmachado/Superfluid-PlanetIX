@@ -23,7 +23,7 @@ interface IMissionControl {
     // user start streaming to the game
     function createRentTiles(address supertoken, address renter, CollectOrder[] memory tiles, int96 flowRate) external;
     // user is streaming and change the rented tiles
-    function updateRentTiles(address supertoken, address renter, CollectOrder[] memory addTiles, CollectOrder[] memory removeTiles, int96 flowRate) external;
+    function updateRentTiles(address supertoken, address renter, CollectOrder[] memory addTiles, CollectOrder[] memory removeTiles, int96 oldFlowRate, int96 flowRate) external;
     // user stop streaming to the game
     function deleteRentTiles(address supertoken, address renter) external;
 }
@@ -70,8 +70,6 @@ contract MissionControlStream is SuperAppBase, Ownable {
 
         uint256 configWord = SuperAppDefinitions.APP_LEVEL_FINAL |
         SuperAppDefinitions.BEFORE_AGREEMENT_CREATED_NOOP |
-        SuperAppDefinitions.BEFORE_AGREEMENT_UPDATED_NOOP |
-        SuperAppDefinitions.AFTER_AGREEMENT_UPDATED_NOOP |
         SuperAppDefinitions.BEFORE_AGREEMENT_TERMINATED_NOOP;
         host.registerAppWithKey(configWord, _registrationKey);
     }
@@ -97,12 +95,28 @@ contract MissionControlStream is SuperAppBase, Ownable {
         missionControl.createRentTiles(address(superToken), player, newTiles, _getFlowRate(player));
     }
 
+    function beforeAgreementUpdated(
+        ISuperToken superToken,
+        address /*agreementClass*/,
+        bytes32 /*agreementId*/,
+        bytes calldata agreementData,
+        bytes calldata /*ctx*/
+    )
+    external
+    view
+    virtual
+    override
+    returns (bytes memory cbdata)
+    {
+        cbdata = abi.encode(_getFlowRate(_getPlayer(agreementData)));
+    }
+
     function afterAgreementUpdated(
         ISuperToken superToken,
         address agreementClass,
         bytes32 /*agreementId*/,
         bytes calldata agreementData,
-        bytes calldata /*cbdata*/,
+        bytes calldata cbdata,
         bytes calldata ctx
     ) external override
     onlyHost
@@ -110,15 +124,19 @@ contract MissionControlStream is SuperAppBase, Ownable {
         if(!_isCFAv1(agreementClass)) revert NotCFAv1();
         newCtx = ctx;
         // front end sends two arrays, newTiles to rent and oldTiles to remove
-        (IMissionControl.CollectOrder[] memory newTiles, IMissionControl.CollectOrder[] memory oldTiles) =
+        (IMissionControl.CollectOrder[] memory addTiles, IMissionControl.CollectOrder[] memory removeTiles) =
         abi.decode(host.decodeCtx(ctx).userData, (IMissionControl.CollectOrder[], IMissionControl.CollectOrder[]));
         // @dev: if missionControl don't want to rent by any reason, it should revert
         address player = _getPlayer(agreementData);
+        // decode old flow rate from callback data
+        int96 oldFlowRate = abi.decode(cbdata, (int96));
+        // also send old flow rate
         missionControl.updateRentTiles(
             address(superToken),
             player,
-            newTiles,
-            oldTiles,
+            addTiles,
+            removeTiles,
+            oldFlowRate,
             _getFlowRate(player)
         );
     }

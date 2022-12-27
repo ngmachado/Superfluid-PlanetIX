@@ -74,4 +74,50 @@ contract MissionControlTest is SuperfluidTester {
         tiles[2] = IMissionControl.CollectOrder(3, 3, 3);
         cfaV1Lib.createFlow(address(missionCtrlStream), superToken , 300, abi.encode(tiles));
     }
+
+    function testUserUpdateTilesRemove() public {
+        vm.startPrank(alice);
+        mockMissionCtrl._setMinFlowRate(100); // 100 wei per second for each tile
+        //rent 3 titles
+        IMissionControl.CollectOrder[] memory tiles = new IMissionControl.CollectOrder[](3);
+        tiles[0] = IMissionControl.CollectOrder(1, 1, 1);
+        tiles[1] = IMissionControl.CollectOrder(2, 2, 2);
+        tiles[2] = IMissionControl.CollectOrder(3, 3, 3);
+        cfaV1Lib.createFlow(address(missionCtrlStream), superToken , 300, abi.encode(tiles));
+        //vm.warp(1000);
+        //update to remove 1 tile
+        IMissionControl.CollectOrder[] memory addTiles;
+        IMissionControl.CollectOrder[] memory removeTiles = new IMissionControl.CollectOrder[](1);
+        removeTiles[0] = IMissionControl.CollectOrder(1, 1, 1);
+        cfaV1Lib.updateFlow(address(missionCtrlStream), superToken , 200, abi.encode(addTiles, removeTiles));
+    }
+
+    function testUserUpdateTilesAddAndRemove() public {
+        vm.startPrank(alice);
+        mockMissionCtrl._setMinFlowRate(100); // 100 wei per second for each tile
+        //rent 3 titles
+        IMissionControl.CollectOrder[] memory tiles = new IMissionControl.CollectOrder[](3);
+        tiles[0] = IMissionControl.CollectOrder(1, 1, 1);
+        tiles[1] = IMissionControl.CollectOrder(2, 2, 2);
+        tiles[2] = IMissionControl.CollectOrder(3, 3, 3);
+        cfaV1Lib.createFlow(address(missionCtrlStream), superToken , 300, abi.encode(tiles));
+        //vm.warp(1000);
+        //update to remove 1 tile
+        IMissionControl.CollectOrder[] memory addTiles = new IMissionControl.CollectOrder[](1);
+        addTiles[0] = IMissionControl.CollectOrder(4, 4, 4);
+        IMissionControl.CollectOrder[] memory removeTiles = new IMissionControl.CollectOrder[](2);
+        removeTiles[0] = IMissionControl.CollectOrder(1, 1, 1);
+        removeTiles[1] = IMissionControl.CollectOrder(2, 2, 2);
+        cfaV1Lib.updateFlow(address(missionCtrlStream), superToken , 200, abi.encode(addTiles, removeTiles));
+    }
+
+    function testUserUpdateTilesAddAndTerminate() public {
+        vm.startPrank(alice);
+        mockMissionCtrl._setMinFlowRate(100); // 100 wei per second for each tile
+        IMissionControl.CollectOrder[] memory tiles = new IMissionControl.CollectOrder[](3);
+        tiles[0] = IMissionControl.CollectOrder(1, 1, 1);
+        cfaV1Lib.createFlow(address(missionCtrlStream), superToken , 300, abi.encode(tiles));
+        //vm.warp(1000);
+        cfaV1Lib.deleteFlow(alice, address(missionCtrlStream) , superToken);
+    }
 }

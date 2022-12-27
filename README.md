@@ -35,6 +35,9 @@ renter: the address of the user creating the stream
 tiles: an array of CollectOrder structs that contain the tile coordinates and the amount of time to rent the tile
 flowRate: the flow rate of the stream
 ```
+#### beforeAgreementUpdated
+
+This function is called by the host contract before a stream is updated and is used to save `flowRate` before update.
 
 #### afterAgreementUpdated
 This function is called by the host contract when a existing stream is updated and is used to process the updating of rented tiles.

@@ -3,12 +3,21 @@ pragma solidity ^0.8.0;
 import {IMissionControl} from "./../../src/MissionControlStream.sol";
 import "forge-std/Console.sol";
 
+
+//Attention: This is a mock contract for testing purposes only. Real implemention is in MissionControl.sol external to this repo
+
 contract MockMissionControl is IMissionControl {
 
     // Mock Vars
     int96 public minFlowRate;
     address public acceptedToken;
     address public missionControlStream;
+
+    // save user coordinates, copied from MissionControl contract for testing purposes
+    mapping(address => mapping(int => mapping(int => CollectOrder))) public rentedTiles;
+
+    // save user termination timestamp
+    mapping(address => uint256) public userTerminationTimestamp;
 
     function _setAcceptedToken(address _acceptedToken) public {
         acceptedToken = _acceptedToken;
@@ -23,7 +32,6 @@ contract MockMissionControl is IMissionControl {
     }
 
     function mockTilePrice(uint256 numberOfTiles) public view returns (int96) {
-        console.log(numberOfTiles);
         // attention: this can overflow silently. Only for testing
         return minFlowRate * int96(int256(numberOfTiles));
     }
@@ -40,6 +48,10 @@ contract MockMissionControl is IMissionControl {
     {
         // decide based on tiles min flowRate
         require(mockTilePrice(tiles.length) == flowRate, "FlowRate don't match price");
+        for(uint256 i = 0; i < tiles.length; i++) {
+            CollectOrder memory tile = tiles[i];
+            rentedTiles[renter][tile.x][tile.y] = tile;
+        }
     }
 
     // user is streaming and change the rented tiles
@@ -48,15 +60,37 @@ contract MockMissionControl is IMissionControl {
         address renter,
         CollectOrder[] memory addTiles,
         CollectOrder[] memory removeTiles,
+        int96 oldFlowRate,
         int96 flowRate
     ) external override
     {
+        // we are mocking the price of the tiles
+        uint256 diff = abs(int256(addTiles.length) - int256(removeTiles.length));
+        uint256 diffFlowRate = abs(int256(flowRate - oldFlowRate));
+        require(diffFlowRate == diff * uint256(uint96(minFlowRate)), "FlowRate don't match price");
+        // add tiles if needed
+        for(uint256 i = 0; i < addTiles.length; i++) {
+            CollectOrder memory tile = addTiles[i];
+            rentedTiles[renter][tile.x][tile.y] = tile;
+        }
+        // remove tiles if needed
+        for(uint256 i = 0; i < removeTiles.length; i++) {
+            CollectOrder memory tile = removeTiles[i];
+            delete rentedTiles[renter][tile.x][tile.y];
+        }
     }
     // user stop streaming to the game
     function deleteRentTiles(
         address supertoken,
-        address rente
+        address renter
     ) external override
     {
+        // set timestamp
+        userTerminationTimestamp[renter] = block.timestamp;
+    }
+
+
+    function abs(int256 x) internal pure returns (uint256) {
+        return x >= 0 ? uint256(x) : uint256(-x);
     }
 }
