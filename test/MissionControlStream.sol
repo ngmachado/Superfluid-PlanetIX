@@ -114,10 +114,29 @@ contract MissionControlTest is SuperfluidTester {
     function testUserUpdateTilesAddAndTerminate() public {
         vm.startPrank(alice);
         mockMissionCtrl._setMinFlowRate(100); // 100 wei per second for each tile
-        IMissionControl.CollectOrder[] memory tiles = new IMissionControl.CollectOrder[](3);
+        IMissionControl.CollectOrder[] memory tiles = new IMissionControl.CollectOrder[](1);
         tiles[0] = IMissionControl.CollectOrder(1, 1, 1);
-        cfaV1Lib.createFlow(address(missionCtrlStream), superToken , 300, abi.encode(tiles));
+        cfaV1Lib.createFlow(address(missionCtrlStream), superToken , 100, abi.encode(tiles));
         //vm.warp(1000);
         cfaV1Lib.deleteFlow(alice, address(missionCtrlStream) , superToken);
+    }
+
+    function testFundControllerCanMoveFunds() public {
+        vm.startPrank(alice);
+        mockMissionCtrl._setMinFlowRate(100000); // 100 wei per second for each tile
+        IMissionControl.CollectOrder[] memory tiles = new IMissionControl.CollectOrder[](1);
+        tiles[0] = IMissionControl.CollectOrder(1, 1, 1);
+        cfaV1Lib.createFlow(address(missionCtrlStream), superToken , 100000, abi.encode(tiles));
+        vm.stopPrank();
+        vm.warp(10000);
+        vm.prank(admin);
+        missionCtrlStream.approve(bob, type(uint256).max);
+        // bob represent the funds controller. Can be a EOA or a contract with custom logic
+        uint256 bobInitialBalance = superToken.balanceOf(bob);
+        vm.prank(bob);
+        superToken.transferFrom(address(missionCtrlStream), bob, 10000000);
+        uint256 bobFinalBalance = superToken.balanceOf(bob);
+        assertTrue(bobInitialBalance < bobFinalBalance);
+
     }
 }
