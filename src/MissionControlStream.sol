@@ -8,18 +8,16 @@ import {
 } from "@superfluid-finance/ethereum-contracts/contracts/interfaces/agreements/IConstantFlowAgreementV1.sol";
 import { SuperAppBase } from "@superfluid-finance/ethereum-contracts/contracts/apps/SuperAppBase.sol";
 
-import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 
 // split each operation to a separate function for readability and easier Mission implementation
 interface IMissionControl {
-
     // mission Control Coordinates struct
     struct CollectOrder {
         int x;
         int y;
         int z;
     }
-
     // user start streaming to the game
     function createRentTiles(address supertoken, address renter, CollectOrder[] memory tiles, int96 flowRate) external;
     // user is streaming and change the rented tiles
