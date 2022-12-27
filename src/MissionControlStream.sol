@@ -8,6 +8,8 @@ import {
 } from "@superfluid-finance/ethereum-contracts/contracts/interfaces/agreements/IConstantFlowAgreementV1.sol";
 import { SuperAppBase } from "@superfluid-finance/ethereum-contracts/contracts/apps/SuperAppBase.sol";
 
+import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+
 // split each operation to a separate function for readability and easier Mission implementation
 interface IMissionControl {
 
@@ -26,18 +28,12 @@ interface IMissionControl {
     function deleteRentTiles(address supertoken, address renter) external;
 }
 
-contract MissionControlStream is SuperAppBase {
+contract MissionControlStream is SuperAppBase, Ownable {
 
     error ZeroAddress();
     error NotCFAv1();
     error NotSuperToken();
     error NotHost();
-    error NotOwner();
-
-    modifier onlyOwner() {
-        if(msg.sender != owner) revert NotOwner();
-        _;
-    }
 
     modifier onlyHost() {
         if(msg.sender != address(host)) revert NotHost();
@@ -50,7 +46,6 @@ contract MissionControlStream is SuperAppBase {
         _;
     }
 
-    address public owner;
     ISuperfluid public host;
     IConstantFlowAgreementV1 public cfa;
     ISuperToken public acceptedToken;
@@ -145,6 +140,11 @@ contract MissionControlStream is SuperAppBase {
 
     function getFlowRate(address player) public view returns (int96) {
         return _getFlowRate(player);
+    }
+
+    //approve another address to move SuperToken on behalf of this contract
+    function approve(address to, uint256 amount) public onlyOwner {
+        acceptedToken.approve(to, amount);
     }
 
     // get player from agreement data

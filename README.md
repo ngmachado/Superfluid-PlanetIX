@@ -64,5 +64,10 @@ renter: the address of the user that is renting the tiles
 ```
 
 
+#### Approve - Funds Controller
+Allows the contract owner to approve another address to move the ISuperToken contract on behalf of the MissionControlStream contract.
+
+
+
 ## Global Architecture
 [![Global Architecture](img/baseDiagram.png)](img/baseDiagram.png)
