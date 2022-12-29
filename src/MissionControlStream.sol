@@ -12,16 +12,18 @@ import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 
 // split each operation to a separate function for readability and easier Mission implementation
 interface IMissionControl {
-    // mission Control Coordinates struct
-    struct CollectOrder {
+    // mission Control PlaceOrder struct
+    struct PlaceOrder {
         int x;
         int y;
         int z;
+        uint tokenId;
+        address tokenAddress;
     }
     // user start streaming to the game
-    function createRentTiles(address supertoken, address renter, CollectOrder[] memory tiles, int96 flowRate) external;
+    function createRentTiles(address supertoken, address renter, PlaceOrder[] memory tiles, int96 flowRate) external;
     // user is streaming and change the rented tiles
-    function updateRentTiles(address supertoken, address renter, CollectOrder[] memory addTiles, CollectOrder[] memory removeTiles, int96 oldFlowRate, int96 flowRate) external;
+    function updateRentTiles(address supertoken, address renter, PlaceOrder[] memory addTiles, PlaceOrder[] memory removeTiles, int96 oldFlowRate, int96 flowRate) external;
     // user stop streaming to the game
     function deleteRentTiles(address supertoken, address renter) external;
 }
@@ -86,8 +88,8 @@ contract MissionControlStream is SuperAppBase, Ownable {
     returns (bytes memory newCtx)
     {
         newCtx = ctx;
-        IMissionControl.CollectOrder[] memory newTiles =
-            abi.decode(host.decodeCtx(ctx).userData, (IMissionControl.CollectOrder[]));
+        IMissionControl.PlaceOrder[] memory newTiles =
+            abi.decode(host.decodeCtx(ctx).userData, (IMissionControl.PlaceOrder[]));
         address player = _getPlayer(agreementData);
         // @dev: if missionControl don't want to rent by any reason, it should revert
         missionControl.createRentTiles(address(superToken), player, newTiles, _getFlowRate(player));
@@ -122,8 +124,8 @@ contract MissionControlStream is SuperAppBase, Ownable {
         if(!_isCFAv1(agreementClass)) revert NotCFAv1();
         newCtx = ctx;
         // front end sends two arrays, newTiles to rent and oldTiles to remove
-        (IMissionControl.CollectOrder[] memory addTiles, IMissionControl.CollectOrder[] memory removeTiles) =
-        abi.decode(host.decodeCtx(ctx).userData, (IMissionControl.CollectOrder[], IMissionControl.CollectOrder[]));
+        (IMissionControl.PlaceOrder[] memory addTiles, IMissionControl.PlaceOrder[] memory removeTiles) =
+        abi.decode(host.decodeCtx(ctx).userData, (IMissionControl.PlaceOrder[], IMissionControl.PlaceOrder[]));
         // @dev: if missionControl don't want to rent by any reason, it should revert
         address player = _getPlayer(agreementData);
         // decode old flow rate from callback data

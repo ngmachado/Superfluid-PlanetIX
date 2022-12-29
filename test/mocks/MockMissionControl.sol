@@ -14,7 +14,7 @@ contract MockMissionControl is IMissionControl {
     address public missionControlStream;
 
     // save user coordinates, copied from MissionControl contract for testing purposes
-    mapping(address => mapping(int => mapping(int => CollectOrder))) public rentedTiles;
+    mapping(address => mapping(int => mapping(int => PlaceOrder))) public rentedTiles;
 
     // save user termination timestamp
     mapping(address => uint256) public userTerminationTimestamp;
@@ -41,7 +41,7 @@ contract MockMissionControl is IMissionControl {
     function createRentTiles(
         address supertoken,
         address renter,
-        CollectOrder[] memory tiles,
+        PlaceOrder[] memory tiles,
         int96 flowRate
     )
     external override
@@ -49,7 +49,7 @@ contract MockMissionControl is IMissionControl {
         // decide based on tiles min flowRate
         require(mockTilePrice(tiles.length) == flowRate, "FlowRate don't match price");
         for(uint256 i = 0; i < tiles.length; i++) {
-            CollectOrder memory tile = tiles[i];
+            PlaceOrder memory tile = tiles[i];
             rentedTiles[renter][tile.x][tile.y] = tile;
         }
     }
@@ -58,8 +58,8 @@ contract MockMissionControl is IMissionControl {
     function updateRentTiles(
         address supertoken,
         address renter,
-        CollectOrder[] memory addTiles,
-        CollectOrder[] memory removeTiles,
+        PlaceOrder[] memory addTiles,
+        PlaceOrder[] memory removeTiles,
         int96 oldFlowRate,
         int96 flowRate
     ) external override
@@ -70,12 +70,12 @@ contract MockMissionControl is IMissionControl {
         require(diffFlowRate == diff * uint256(uint96(minFlowRate)), "FlowRate don't match price");
         // add tiles if needed
         for(uint256 i = 0; i < addTiles.length; i++) {
-            CollectOrder memory tile = addTiles[i];
+            PlaceOrder memory tile = addTiles[i];
             rentedTiles[renter][tile.x][tile.y] = tile;
         }
         // remove tiles if needed
         for(uint256 i = 0; i < removeTiles.length; i++) {
-            CollectOrder memory tile = removeTiles[i];
+            PlaceOrder memory tile = removeTiles[i];
             delete rentedTiles[renter][tile.x][tile.y];
         }
     }
