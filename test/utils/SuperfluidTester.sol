@@ -22,8 +22,11 @@ contract SuperfluidTester is Test {
     address[] internal TEST_ACCOUNTS = [admin, alice, bob, carol, eve];
     uint256 internal immutable N_TESTERS;
 
-    TestToken internal token;
-    SuperToken internal superToken;
+    TestToken internal token1;
+    SuperToken internal superToken1;
+
+    TestToken internal token2;
+    SuperToken internal superToken2;
 
     uint256 private _expectedTotalSupply = 0;
 

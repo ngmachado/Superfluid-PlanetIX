@@ -48,23 +48,27 @@ contract MissionControlStream is SuperAppBase, Ownable {
 
     ISuperfluid public host;
     IConstantFlowAgreementV1 public cfa;
-    ISuperToken public acceptedToken;
+    ISuperToken public acceptedToken1;
+    ISuperToken public acceptedToken2;
     IMissionControl public missionControl;
     bytes32 constant cfaId = keccak256("org.superfluid-finance.agreements.ConstantFlowAgreement.v1");
 
     constructor(
         ISuperfluid _host,
-        ISuperToken _acceptedToken,
+        ISuperToken _acceptedToken1,
+        ISuperToken _acceptedToken2,
         address _missionControl,
         string memory _registrationKey
     ) {
         if(address(_host) == address(0)) revert ZeroAddress();
-        if(address(_acceptedToken) == address(0)) revert ZeroAddress();
+        if(address(_acceptedToken1) == address(0)) revert ZeroAddress();
+        if(address(_acceptedToken2) == address(0)) revert ZeroAddress();
         if(_missionControl == address(0)) revert ZeroAddress();
 
         host = _host;
         cfa = IConstantFlowAgreementV1(address(_host.getAgreementClass(cfaId)));
-        acceptedToken = _acceptedToken;
+        acceptedToken1 = _acceptedToken1;
+        acceptedToken2 = _acceptedToken2;
         // set MissionControl contract
         missionControl = IMissionControl(_missionControl);
 
@@ -92,7 +96,7 @@ contract MissionControlStream is SuperAppBase, Ownable {
             abi.decode(host.decodeCtx(ctx).userData, (IMissionControl.PlaceOrder[]));
         address player = _getPlayer(agreementData);
         // @dev: if missionControl don't want to rent by any reason, it should revert
-        missionControl.createRentTiles(address(superToken), player, newTiles, _getFlowRate(player));
+        missionControl.createRentTiles(address(superToken), player, newTiles, _getFlowRate(superToken, player));
     }
 
     function beforeAgreementUpdated(
@@ -108,7 +112,7 @@ contract MissionControlStream is SuperAppBase, Ownable {
     override
     returns (bytes memory cbdata)
     {
-        cbdata = abi.encode(_getFlowRate(_getPlayer(agreementData)));
+        cbdata = abi.encode(_getFlowRate(superToken, _getPlayer(agreementData)), _getPlayer(agreementData));
     }
 
     function afterAgreementUpdated(
@@ -137,7 +141,7 @@ contract MissionControlStream is SuperAppBase, Ownable {
             addTiles,
             removeTiles,
             oldFlowRate,
-            _getFlowRate(player)
+            _getFlowRate(superToken, player)
         );
     }
 
@@ -149,20 +153,20 @@ contract MissionControlStream is SuperAppBase, Ownable {
         bytes calldata, /*cbdata*/
         bytes calldata ctx
     ) external override onlyHost returns (bytes memory newCtx) {
-        if (superToken != acceptedToken || agreementClass != address(cfa)) {
+        if (_isSameToken(superToken) || agreementClass != address(cfa)) {
             return ctx;
         }
         try missionControl.deleteRentTiles(address(superToken), _getPlayer(agreementData)) {} catch {}
         return ctx;
     }
 
-    function getFlowRate(address player) public view returns (int96) {
-        return _getFlowRate(player);
+    function getFlowRate(ISuperToken superToken, address player) public view returns (int96) {
+        return _getFlowRate(superToken, player);
     }
 
     //approve another address to move SuperToken on behalf of this contract
-    function approve(address to, uint256 amount) public onlyOwner {
-        acceptedToken.approve(to, amount);
+    function approve(ISuperToken superToken, address to, uint256 amount) public onlyOwner {
+        superToken.approve(to, amount);
     }
 
     // get player from agreement data
@@ -170,12 +174,12 @@ contract MissionControlStream is SuperAppBase, Ownable {
         (player,) = abi.decode(agreementData, (address, address));
     }
 
-    function _getFlowRate(address sender) internal view returns (int96 flowRate) {
-            (,flowRate,,) = cfa.getFlow(acceptedToken, sender, address(this));
+    function _getFlowRate(ISuperToken superToken, address sender) internal view returns (int96 flowRate) {
+            (,flowRate,,) = cfa.getFlow(superToken, sender, address(this));
     }
 
     function _isSameToken(ISuperToken superToken) private view returns (bool) {
-        return address(superToken) == address(acceptedToken);
+        return address(superToken) == address(acceptedToken1) || address(superToken) == address(acceptedToken2);
     }
 
     function _isCFAv1(address agreementClass) private view returns (bool) {
