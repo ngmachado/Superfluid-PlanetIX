@@ -9,24 +9,7 @@ import {
 import { SuperAppBase } from "@superfluid-finance/ethereum-contracts/contracts/apps/SuperAppBase.sol";
 
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
-
-// split each operation to a separate function for readability and easier Mission implementation
-interface IMissionControl {
-    // mission Control PlaceOrder struct
-    struct PlaceOrder {
-        int x;
-        int y;
-        int z;
-        uint tokenId;
-        address tokenAddress;
-    }
-    // user start streaming to the game
-    function createRentTiles(address supertoken, address renter, PlaceOrder[] memory tiles, int96 flowRate) external;
-    // user is streaming and change the rented tiles
-    function updateRentTiles(address supertoken, address renter, PlaceOrder[] memory addTiles, PlaceOrder[] memory removeTiles, int96 oldFlowRate, int96 flowRate) external;
-    // user stop streaming to the game
-    function deleteRentTiles(address supertoken, address renter) external;
-}
+import { IMissionControlExtension } from "./interfaces/IMissionControlExtension.sol";
 
 contract MissionControlStream is SuperAppBase, Ownable {
 
@@ -34,6 +17,7 @@ contract MissionControlStream is SuperAppBase, Ownable {
     error NotCFAv1();
     error NotSuperToken();
     error NotHost();
+    error EmptyTiles();
 
     modifier onlyHost() {
         if(msg.sender != address(host)) revert NotHost();
@@ -46,11 +30,11 @@ contract MissionControlStream is SuperAppBase, Ownable {
         _;
     }
 
-    ISuperfluid public host;
-    IConstantFlowAgreementV1 public cfa;
-    ISuperToken public acceptedToken1;
-    ISuperToken public acceptedToken2;
-    IMissionControl public missionControl;
+    ISuperfluid immutable public host;
+    IConstantFlowAgreementV1 immutable public cfa;
+    ISuperToken immutable public acceptedToken1;
+    ISuperToken immutable public acceptedToken2;
+    IMissionControlExtension immutable public missionControl;
     bytes32 constant cfaId = keccak256("org.superfluid-finance.agreements.ConstantFlowAgreement.v1");
 
     constructor(
@@ -69,13 +53,14 @@ contract MissionControlStream is SuperAppBase, Ownable {
         cfa = IConstantFlowAgreementV1(address(_host.getAgreementClass(cfaId)));
         acceptedToken1 = _acceptedToken1;
         acceptedToken2 = _acceptedToken2;
-        // set MissionControl contract
-        missionControl = IMissionControl(_missionControl);
+        missionControl = IMissionControlExtension(_missionControl);
 
-        uint256 configWord = SuperAppDefinitions.APP_LEVEL_FINAL |
-        SuperAppDefinitions.BEFORE_AGREEMENT_CREATED_NOOP |
-        SuperAppDefinitions.BEFORE_AGREEMENT_TERMINATED_NOOP;
-        host.registerAppWithKey(configWord, _registrationKey);
+        host.registerAppWithKey(
+            SuperAppDefinitions.APP_LEVEL_FINAL |
+            SuperAppDefinitions.BEFORE_AGREEMENT_CREATED_NOOP |
+            SuperAppDefinitions.BEFORE_AGREEMENT_TERMINATED_NOOP,
+            _registrationKey
+        );
     }
 
     function afterAgreementCreated(
@@ -92,8 +77,9 @@ contract MissionControlStream is SuperAppBase, Ownable {
     returns (bytes memory newCtx)
     {
         newCtx = ctx;
-        IMissionControl.PlaceOrder[] memory newTiles =
-            abi.decode(host.decodeCtx(ctx).userData, (IMissionControl.PlaceOrder[]));
+        IMissionControlExtension.PlaceOrder[] memory newTiles =
+            abi.decode(host.decodeCtx(ctx).userData, (IMissionControlExtension.PlaceOrder[]));
+        if(newTiles.length == 0) revert EmptyTiles();
         address player = _getPlayer(agreementData);
         // @dev: if missionControl don't want to rent by any reason, it should revert
         missionControl.createRentTiles(address(superToken), player, newTiles, _getFlowRate(superToken, player));
@@ -127,14 +113,14 @@ contract MissionControlStream is SuperAppBase, Ownable {
     returns(bytes memory newCtx) {
         if(!_isCFAv1(agreementClass)) revert NotCFAv1();
         newCtx = ctx;
-        // front end sends two arrays, newTiles to rent and oldTiles to remove
-        (IMissionControl.PlaceOrder[] memory addTiles, IMissionControl.PlaceOrder[] memory removeTiles) =
-        abi.decode(host.decodeCtx(ctx).userData, (IMissionControl.PlaceOrder[], IMissionControl.PlaceOrder[]));
+        // frontend sends two arrays, newTiles to rent and oldTiles to remove
+        (IMissionControlExtension.PlaceOrder[] memory addTiles, IMissionControlExtension.PlaceOrder[] memory removeTiles) =
+        abi.decode(host.decodeCtx(ctx).userData, (IMissionControlExtension.PlaceOrder[], IMissionControlExtension.PlaceOrder[]));
+        if(addTiles.length == 0 && removeTiles.length == 0) revert EmptyTiles();
         // @dev: if missionControl don't want to rent by any reason, it should revert
         address player = _getPlayer(agreementData);
         // decode old flow rate from callback data
         int96 oldFlowRate = abi.decode(cbdata, (int96));
-        // also send old flow rate
         missionControl.updateRentTiles(
             address(superToken),
             player,
@@ -152,7 +138,7 @@ contract MissionControlStream is SuperAppBase, Ownable {
         bytes calldata agreementData,
         bytes calldata, /*cbdata*/
         bytes calldata ctx
-    ) external override onlyHost returns (bytes memory newCtx) {
+    ) external override onlyHost returns (bytes memory) {
         if (_isSameToken(superToken) || agreementClass != address(cfa)) {
             return ctx;
         }
