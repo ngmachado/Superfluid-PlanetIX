@@ -1,12 +1,12 @@
 pragma solidity ^0.8.0;
 
-import {IMissionControl} from "./../../src/MissionControlStream.sol";
+import {IMissionControlExtension} from "./../../src/interfaces/IMissionControlExtension.sol";
 import "forge-std/Console.sol";
 
 
 //Attention: This is a mock contract for testing purposes only. Real implemention is in MissionControl.sol external to this repo
 
-contract MockMissionControl is IMissionControl {
+contract MockMissionControl is IMissionControlExtension {
 
     // Mock Vars
     int96 public minFlowRate;
