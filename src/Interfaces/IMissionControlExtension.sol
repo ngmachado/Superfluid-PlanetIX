@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 // split each operation to a separate function for readability and easier Mission implementation
-interface IMissionControlStream {
+interface IMissionControlExtension {
     // mission Control PlaceOrder struct
     struct PlaceOrder {
         int x;
