@@ -3,13 +3,18 @@ pragma solidity ^0.8.0;
 
 // split each operation to a separate function for readability and easier Mission implementation
 interface IMissionControlExtension {
+
     // mission Control PlaceOrder struct
     struct PlaceOrder {
-        int x;
-        int y;
-        int z;
-        uint tokenId;
+        CollectOrder order;
+        uint256 tokenId;
         address tokenAddress;
+    }
+
+    struct CollectOrder {
+        int256 x;
+        int256 y;
+        int256 z;
     }
     // user start streaming to the game
     function createRentTiles(address superToken, address renter, PlaceOrder[] memory tiles, int96 flowRate) external;

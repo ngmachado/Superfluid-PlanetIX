@@ -50,7 +50,7 @@ contract MockMissionControl is IMissionControlExtension {
         require(mockTilePrice(tiles.length) == flowRate, "FlowRate don't match price");
         for(uint256 i = 0; i < tiles.length; i++) {
             PlaceOrder memory tile = tiles[i];
-            rentedTiles[renter][tile.x][tile.y] = tile;
+            rentedTiles[renter][tile.order.x][tile.order.y] = tile;
         }
     }
 
@@ -71,12 +71,12 @@ contract MockMissionControl is IMissionControlExtension {
         // add tiles if needed
         for(uint256 i = 0; i < addTiles.length; i++) {
             PlaceOrder memory tile = addTiles[i];
-            rentedTiles[renter][tile.x][tile.y] = tile;
+            rentedTiles[renter][tile.order.x][tile.order.y] = tile;
         }
         // remove tiles if needed
         for(uint256 i = 0; i < removeTiles.length; i++) {
             PlaceOrder memory tile = removeTiles[i];
-            delete rentedTiles[renter][tile.x][tile.y];
+            delete rentedTiles[renter][tile.order.x][tile.order.y];
         }
     }
     // user stop streaming to the game
