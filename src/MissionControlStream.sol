@@ -114,8 +114,8 @@ contract MissionControlStream is SuperAppBase, Ownable {
         if(!_isCFAv1(agreementClass)) revert NotCFAv1();
         newCtx = ctx;
         // frontend sends two arrays, newTiles to rent and oldTiles to remove
-        (IMissionControlExtension.PlaceOrder[] memory addTiles, IMissionControlExtension.PlaceOrder[] memory removeTiles) =
-        abi.decode(host.decodeCtx(ctx).userData, (IMissionControlExtension.PlaceOrder[], IMissionControlExtension.PlaceOrder[]));
+        (IMissionControlExtension.PlaceOrder[] memory addTiles, IMissionControlExtension.CollectOrder[] memory removeTiles) =
+        abi.decode(host.decodeCtx(ctx).userData, (IMissionControlExtension.PlaceOrder[], IMissionControlExtension.CollectOrder[]));
         if(addTiles.length == 0 && removeTiles.length == 0) revert EmptyTiles();
         // @dev: if missionControl don't want to rent by any reason, it should revert
         address player = _getPlayer(agreementData);
