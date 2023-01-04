@@ -98,7 +98,7 @@ contract MissionControlStream is SuperAppBase, Ownable {
     override
     returns (bytes memory cbdata)
     {
-        cbdata = abi.encode(_getFlowRate(superToken, _getPlayer(agreementData)), _getPlayer(agreementData));
+        cbdata = abi.encode(_getFlowRate(superToken, _getPlayer(agreementData)));
     }
 
     function afterAgreementUpdated(
