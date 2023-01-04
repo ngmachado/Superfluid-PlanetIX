@@ -77,6 +77,11 @@ contract MissionControlTest is SuperfluidTester {
         });
     }
 
+    // is app jailed
+    function _checkAppJailed() public returns (bool) {
+        assertFalse(host.isAppJailed(missionCtrlStream), "app is jailed");
+    }
+
     function testDeployMissionControleStream() public {
         assertEq(address(missionCtrlStream.acceptedToken1()), address(superToken1));
         assertEq(address(missionCtrlStream.acceptedToken2()), address(superToken2));
@@ -109,6 +114,7 @@ contract MissionControlTest is SuperfluidTester {
         IMissionControlExtension.PlaceOrder[] memory removeTiles = new IMissionControlExtension.PlaceOrder[](1);
         removeTiles[0] = _createPlaceOrder(1, 1, 1, 1);
         cfaV1Lib.updateFlow(address(missionCtrlStream), superToken1 , 200, abi.encode(addTiles, removeTiles));
+        _checkAppJailed();
     }
 
     function testUserUpdateTilesAddAndRemove() public {
@@ -128,6 +134,7 @@ contract MissionControlTest is SuperfluidTester {
         removeTiles[0] = _createPlaceOrder(1, 1, 1, 1);
         removeTiles[1] = _createPlaceOrder(2, 2, 2, 2);
         cfaV1Lib.updateFlow(address(missionCtrlStream), superToken1 , 200, abi.encode(addTiles, removeTiles));
+        _checkAppJailed();
     }
 
     function testUserUpdateTilesAddAndTerminate() public {
@@ -138,6 +145,7 @@ contract MissionControlTest is SuperfluidTester {
         cfaV1Lib.createFlow(address(missionCtrlStream), superToken1 , 100, abi.encode(tiles));
         //vm.warp(1000);
         cfaV1Lib.deleteFlow(alice, address(missionCtrlStream) , superToken1);
+        _checkAppJailed();
     }
 
     function testFundControllerCanMoveFunds() public {
@@ -156,6 +164,7 @@ contract MissionControlTest is SuperfluidTester {
         superToken1.transferFrom(address(missionCtrlStream), bob, 10000000);
         uint256 bobFinalBalance = superToken1.balanceOf(bob);
         assertTrue(bobInitialBalance < bobFinalBalance);
+        _checkAppJailed();
     }
 
     function testUserUpdateTilesAddAndTerminateSecondToken() public {
@@ -166,5 +175,43 @@ contract MissionControlTest is SuperfluidTester {
         cfaV1Lib.createFlow(address(missionCtrlStream), superToken2 , 100, abi.encode(tiles));
         //vm.warp(1000);
         cfaV1Lib.deleteFlow(alice, address(missionCtrlStream) , superToken2);
+        _checkAppJailed();
+    }
+
+    function testRevertOnCreate() public
+    {
+        vm.startPrank(alice);
+        mockMissionCtrl._setMinFlowRate(100); // 100 wei per second for each tile
+        mockMissionCtrl._setRevertOnCreate(true);
+        IMissionControlExtension.PlaceOrder[] memory tiles = new IMissionControlExtension.PlaceOrder[](1);
+        tiles[0] = _createPlaceOrder(1, 1, 1, 1);
+        vm.expectRevert("MockMissionControl: revertOnCreate");
+        cfaV1Lib.createFlow(address(missionCtrlStream), superToken1 , 100, abi.encode(tiles));
+        _checkAppJailed();
+    }
+
+    function testReverseOnUpdate() public
+    {
+        vm.startPrank(alice);
+        mockMissionCtrl._setMinFlowRate(100); // 100 wei per second for each tile
+        mockMissionCtrl._setRevertOnUpdate(true);
+        IMissionControlExtension.PlaceOrder[] memory tiles = new IMissionControlExtension.PlaceOrder[](1);
+        tiles[0] = _createPlaceOrder(1, 1, 1, 1);
+        cfaV1Lib.createFlow(address(missionCtrlStream), superToken1 , 100, abi.encode(tiles));
+        vm.expectRevert("MockMissionControl: revertOnUpdate");
+        cfaV1Lib.updateFlow(address(missionCtrlStream), superToken1 , 100, abi.encode(tiles, tiles));
+        _checkAppJailed();
+    }
+
+    function testRevertOnDeleteShouldntJail() public
+    {
+        vm.startPrank(alice);
+        mockMissionCtrl._setMinFlowRate(100); // 100 wei per second for each tile
+        mockMissionCtrl._setRevertOnDelete(true);
+        IMissionControlExtension.PlaceOrder[] memory tiles = new IMissionControlExtension.PlaceOrder[](1);
+        tiles[0] = _createPlaceOrder(1, 1, 1, 1);
+        cfaV1Lib.createFlow(address(missionCtrlStream), superToken1 , 100, abi.encode(tiles));
+        cfaV1Lib.deleteFlow(alice, address(missionCtrlStream) , superToken1);
+        _checkAppJailed();
     }
 }

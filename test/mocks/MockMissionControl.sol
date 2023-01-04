@@ -4,7 +4,7 @@ import {IMissionControlExtension} from "./../../src/interfaces/IMissionControlEx
 import "forge-std/Console.sol";
 
 
-//Attention: This is a mock contract for testing purposes only. Real implemention is in MissionControl.sol external to this repo
+//Attention: This is a mock contract for testing purposes only. Real implementation is MissionControl.sol external to this repo
 
 contract MockMissionControl is IMissionControlExtension {
 
@@ -12,6 +12,10 @@ contract MockMissionControl is IMissionControlExtension {
     int96 public minFlowRate;
     address public acceptedToken;
     address public missionControlStream;
+
+    bool revertOnCreate;
+    bool revertOnUpdate;
+    bool revertOnDelete;
 
     // save user coordinates, copied from MissionControl contract for testing purposes
     mapping(address => mapping(int => mapping(int => PlaceOrder))) public rentedTiles;
@@ -36,6 +40,18 @@ contract MockMissionControl is IMissionControlExtension {
         return minFlowRate * int96(int256(numberOfTiles));
     }
 
+    function _setRevertOnCreate(bool _revertOnCreate) public {
+        revertOnCreate = _revertOnCreate;
+    }
+
+    function _setRevertOnUpdate(bool _revertOnUpdate) public {
+        revertOnUpdate = _revertOnUpdate;
+    }
+
+    function _setRevertOnDelete(bool _revertOnDelete) public {
+        revertOnDelete = _revertOnDelete;
+    }
+
 
     // @dev: Mission control refuse operation by reverting
     function createRentTiles(
@@ -46,6 +62,7 @@ contract MockMissionControl is IMissionControlExtension {
     )
     external override
     {
+        if(revertOnCreate) revert("MockMissionControl: revertOnCreate");
         // decide based on tiles min flowRate
         require(mockTilePrice(tiles.length) == flowRate, "FlowRate don't match price");
         for(uint256 i = 0; i < tiles.length; i++) {
@@ -59,11 +76,12 @@ contract MockMissionControl is IMissionControlExtension {
         address supertoken,
         address renter,
         PlaceOrder[] memory addTiles,
-        PlaceOrder[] memory removeTiles,
+        CollectOrder[] memory removeTiles,
         int96 oldFlowRate,
         int96 flowRate
     ) external override
     {
+        if(revertOnUpdate) revert("MockMissionControl: revertOnUpdate");
         // we are mocking the price of the tiles
         uint256 diff = abs(int256(addTiles.length) - int256(removeTiles.length));
         uint256 diffFlowRate = abs(int256(flowRate - oldFlowRate));
@@ -75,8 +93,8 @@ contract MockMissionControl is IMissionControlExtension {
         }
         // remove tiles if needed
         for(uint256 i = 0; i < removeTiles.length; i++) {
-            PlaceOrder memory tile = removeTiles[i];
-            delete rentedTiles[renter][tile.order.x][tile.order.y];
+            CollectOrder memory tile = removeTiles[i];
+            delete rentedTiles[renter][tile.x][tile.y];
         }
     }
     // user stop streaming to the game
@@ -85,6 +103,7 @@ contract MockMissionControl is IMissionControlExtension {
         address renter
     ) external override
     {
+        if(revertOnDelete) revert("MockMissionControl: revertOnDelete");
         // set timestamp
         userTerminationTimestamp[renter] = block.timestamp;
     }
