@@ -82,6 +82,9 @@ contract MockMissionControl is IMissionControlExtension {
     ) external override
     {
         if(revertOnUpdate) revert("MockMissionControl: revertOnUpdate");
+        // should always get old and new flow rate
+        require(oldFlowRate != 0, "oldFlowRate should be != 0");
+        require(flowRate != 0, "flowRate should be != 0");
         // we are mocking the price of the tiles
         uint256 diff = abs(int256(addTiles.length) - int256(removeTiles.length));
         uint256 diffFlowRate = abs(int256(flowRate - oldFlowRate));
