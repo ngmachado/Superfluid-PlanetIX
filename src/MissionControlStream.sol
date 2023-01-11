@@ -128,7 +128,7 @@ contract MissionControlStream is SuperAppBase, Ownable {
         if(!_isCFAv1(agreementClass)) revert NotCFAv1();
         newCtx = ctx;
         RuntimeVars memory vars;
-        // frontend sends two arrays, newTiles to rent and oldTiles to remove
+        // frontend sends two arrays, addTiles to rent and removeTiles to stop renting
         (vars.addTiles, vars.removeTiles) = abi.decode(host.decodeCtx(ctx).userData,
             (
              IMissionControlExtension.PlaceOrder[],
