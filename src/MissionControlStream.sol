@@ -11,6 +11,8 @@ import { SuperAppBase } from "@superfluid-finance/ethereum-contracts/contracts/a
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 import { IMissionControlExtension } from "./interfaces/IMissionControlExtension.sol";
 
+import "forge-std/console.sol";
+
 contract MissionControlStream is SuperAppBase, Ownable {
 
     error ZeroAddress();
@@ -19,11 +21,15 @@ contract MissionControlStream is SuperAppBase, Ownable {
     error NotHost();
     error EmptyTiles();
 
+    event TerminationCallReverted(address indexed sender);
+
+    // @dev: function is only called by superfluid contract
     modifier onlyHost() {
         if(msg.sender != address(host)) revert NotHost();
         _;
     }
 
+    // @dev: function can only called if reacting to a CFA stream and super token are allowed
     modifier onlyExpected(ISuperToken superToken, address agreementClass) {
         if(!_isSameToken(superToken)) revert NotSuperToken();
         if(!_isCFAv1(agreementClass)) revert NotCFAv1();
@@ -36,6 +42,15 @@ contract MissionControlStream is SuperAppBase, Ownable {
     ISuperToken immutable public acceptedToken2;
     IMissionControlExtension immutable public missionControl;
     bytes32 constant cfaId = keccak256("org.superfluid-finance.agreements.ConstantFlowAgreement.v1");
+
+    /* bag struct for local variables to avoid stack too deep error */
+    struct RuntimeVars {
+        IMissionControlExtension.PlaceOrder[] addTiles;
+        IMissionControlExtension.CollectOrder[] removeTiles;
+        address player;
+        int96 oldFlowRate;
+        int96 newFlowRate;
+    }
 
     constructor(
         ISuperfluid _host,
@@ -77,12 +92,13 @@ contract MissionControlStream is SuperAppBase, Ownable {
     returns (bytes memory newCtx)
     {
         newCtx = ctx;
-        IMissionControlExtension.PlaceOrder[] memory newTiles =
-            abi.decode(host.decodeCtx(ctx).userData, (IMissionControlExtension.PlaceOrder[]));
-        if(newTiles.length == 0) revert EmptyTiles();
-        address player = _getPlayer(agreementData);
+        RuntimeVars memory vars;
+        vars.addTiles = abi.decode(host.decodeCtx(ctx).userData, (IMissionControlExtension.PlaceOrder[]));
+        if(vars.addTiles.length == 0) revert EmptyTiles();
+        vars.player = _getPlayer(agreementData);
+        vars.newFlowRate = _getFlowRate(superToken, vars.player);
         // @dev: if missionControl don't want to rent by any reason, it should revert
-        missionControl.createRentTiles(address(superToken), player, newTiles, _getFlowRate(superToken, player));
+        missionControl.createRentTiles(address(superToken), vars.player, vars.addTiles, vars.newFlowRate);
     }
 
     function beforeAgreementUpdated(
@@ -113,21 +129,27 @@ contract MissionControlStream is SuperAppBase, Ownable {
     returns(bytes memory newCtx) {
         if(!_isCFAv1(agreementClass)) revert NotCFAv1();
         newCtx = ctx;
+        RuntimeVars memory vars;
         // frontend sends two arrays, newTiles to rent and oldTiles to remove
-        (IMissionControlExtension.PlaceOrder[] memory addTiles, IMissionControlExtension.CollectOrder[] memory removeTiles) =
-        abi.decode(host.decodeCtx(ctx).userData, (IMissionControlExtension.PlaceOrder[], IMissionControlExtension.CollectOrder[]));
-        if(addTiles.length == 0 && removeTiles.length == 0) revert EmptyTiles();
-        // @dev: if missionControl don't want to rent by any reason, it should revert
-        address player = _getPlayer(agreementData);
+        (vars.addTiles, vars.removeTiles) = abi.decode(host.decodeCtx(ctx).userData,
+            (
+             IMissionControlExtension.PlaceOrder[],
+             IMissionControlExtension.CollectOrder[]
+            )
+        );
+        if(vars.addTiles.length == 0 && vars.removeTiles.length == 0) revert EmptyTiles();
+        vars.player = _getPlayer(agreementData);
         // decode old flow rate from callback data
-        int96 oldFlowRate = abi.decode(cbdata, (int96));
+        vars.oldFlowRate = abi.decode(cbdata, (int96));
+        vars.newFlowRate = _getFlowRate(superToken, vars.player);
+        // @dev: if missionControl don't want to rent by any reason, it should revert
         missionControl.updateRentTiles(
             address(superToken),
-            player,
-            addTiles,
-            removeTiles,
-            oldFlowRate,
-            _getFlowRate(superToken, player)
+            vars.player,
+            vars.addTiles,
+            vars.removeTiles,
+            vars.oldFlowRate,
+            vars.newFlowRate
         );
     }
 
@@ -139,10 +161,15 @@ contract MissionControlStream is SuperAppBase, Ownable {
         bytes calldata, /*cbdata*/
         bytes calldata ctx
     ) external override onlyHost returns (bytes memory) {
-        if (_isSameToken(superToken) || agreementClass != address(cfa)) {
+        if (!_isSameToken(superToken) || agreementClass != address(cfa)) {
             return ctx;
         }
-        try missionControl.deleteRentTiles(address(superToken), _getPlayer(agreementData)) {} catch {}
+
+        // @dev: missionControl shouldn't revert on termination callback. If reverts notify by emitting event
+        address player = _getPlayer(agreementData);
+        try missionControl.deleteRentTiles(address(superToken), player) {} catch {
+            emit TerminationCallReverted(player);
+        }
         return ctx;
     }
 

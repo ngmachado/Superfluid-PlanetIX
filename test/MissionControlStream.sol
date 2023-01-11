@@ -10,6 +10,8 @@ import { MockMissionControl } from "./mocks/MockMissionControl.sol";
 
 contract MissionControlTest is SuperfluidTester {
 
+    event TerminationCallReverted(address indexed sender);
+
     /// @dev This is required by solidity for using the CFAv1Library in the tester
     using CFAv1Library for CFAv1Library.InitData;
 
@@ -211,6 +213,8 @@ contract MissionControlTest is SuperfluidTester {
         IMissionControlExtension.PlaceOrder[] memory tiles = new IMissionControlExtension.PlaceOrder[](1);
         tiles[0] = _createPlaceOrder(1, 1, 1, 1);
         cfaV1Lib.createFlow(address(missionCtrlStream), superToken1 , 100, abi.encode(tiles));
+        vm.expectEmit(true, true, true, true);
+        emit TerminationCallReverted(alice);
         cfaV1Lib.deleteFlow(alice, address(missionCtrlStream) , superToken1);
         _checkAppJailed();
     }
