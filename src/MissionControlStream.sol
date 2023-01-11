@@ -185,7 +185,7 @@ contract MissionControlStream is SuperAppBase, Ownable {
     }
 
     function _getFlowRate(ISuperToken superToken, address sender) internal view returns (int96 flowRate) {
-            (,flowRate,,) = cfa.getFlow(superToken, sender, address(this));
+        (,flowRate,,) = cfa.getFlow(superToken, sender, address(this));
     }
 
     function _isSameToken(ISuperToken superToken) private view returns (bool) {
