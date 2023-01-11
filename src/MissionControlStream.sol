@@ -171,8 +171,8 @@ contract MissionControlStream is SuperAppBase, Ownable {
         return ctx;
     }
 
-    function getFlowRate(ISuperToken superToken, address player) public view returns (int96) {
-        return _getFlowRate(superToken, player);
+    function getFlowRate(address superToken, address player) public view returns (int96) {
+        return _getFlowRate(ISuperToken(superToken), player);
     }
 
     //approve another address to move SuperToken on behalf of this contract
