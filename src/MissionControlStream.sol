@@ -7,11 +7,8 @@ import {
     IConstantFlowAgreementV1
 } from "@superfluid-finance/ethereum-contracts/contracts/interfaces/agreements/IConstantFlowAgreementV1.sol";
 import { SuperAppBase } from "@superfluid-finance/ethereum-contracts/contracts/apps/SuperAppBase.sol";
-
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 import { IMissionControlExtension } from "./interfaces/IMissionControlExtension.sol";
-
-import "forge-std/console.sol";
 
 contract MissionControlStream is SuperAppBase, Ownable {
 
