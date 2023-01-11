@@ -158,7 +158,7 @@ contract MissionControlStream is SuperAppBase, Ownable {
         bytes calldata, /*cbdata*/
         bytes calldata ctx
     ) external override onlyHost returns (bytes memory) {
-        if (!_isSameToken(superToken) || agreementClass != address(cfa)) {
+        if (!_isSameToken(superToken) || !_isCFAv1(agreementClass)) {
             return ctx;
         }
 
