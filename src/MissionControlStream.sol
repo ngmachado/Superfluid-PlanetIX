@@ -56,10 +56,11 @@ contract MissionControlStream is SuperAppBase, Ownable {
         address _missionControl,
         string memory _registrationKey
     ) {
-        if(address(_host) == address(0)) revert ZeroAddress();
-        if(address(_acceptedToken1) == address(0)) revert ZeroAddress();
-        if(address(_acceptedToken2) == address(0)) revert ZeroAddress();
-        if(_missionControl == address(0)) revert ZeroAddress();
+        if(address(_host) == address(0) ||
+            address(_acceptedToken1) == address(0) ||
+            address(_acceptedToken2) == address(0) ||
+            _missionControl == address(0)
+        ) revert ZeroAddress();
 
         host = _host;
         cfa = IConstantFlowAgreementV1(address(_host.getAgreementClass(cfaId)));
