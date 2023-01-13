@@ -110,11 +110,10 @@ contract MissionControlTest is SuperfluidTester {
         tiles[1] = _createPlaceOrder(2, 2, 2, 2);
         tiles[2] = _createPlaceOrder(3, 3, 3, 3);
         cfaV1Lib.createFlow(address(missionCtrlStream), superToken1 , 300, abi.encode(tiles));
-        //vm.warp(1000);
         //update to remove 1 tile
         IMissionControlExtension.PlaceOrder[] memory addTiles;
-        IMissionControlExtension.PlaceOrder[] memory removeTiles = new IMissionControlExtension.PlaceOrder[](1);
-        removeTiles[0] = _createPlaceOrder(1, 1, 1, 1);
+        IMissionControlExtension.CollectOrder[] memory removeTiles = new IMissionControlExtension.CollectOrder[](1);
+        removeTiles[0] = IMissionControlExtension.CollectOrder(1, 1, 1);
         cfaV1Lib.updateFlow(address(missionCtrlStream), superToken1 , 200, abi.encode(addTiles, removeTiles));
         _checkAppJailed();
     }
@@ -128,13 +127,49 @@ contract MissionControlTest is SuperfluidTester {
         tiles[1] = _createPlaceOrder(2, 2, 2, 2);
         tiles[2] = _createPlaceOrder(3, 3, 3, 3);
         cfaV1Lib.createFlow(address(missionCtrlStream), superToken1 , 300, abi.encode(tiles));
-        //vm.warp(1000);
         //update to remove 1 tile
         IMissionControlExtension.PlaceOrder[] memory addTiles = new IMissionControlExtension.PlaceOrder[](1);
         addTiles[0] = _createPlaceOrder(4, 4, 4, 4);
-        IMissionControlExtension.PlaceOrder[] memory removeTiles = new IMissionControlExtension.PlaceOrder[](2);
-        removeTiles[0] = _createPlaceOrder(1, 1, 1, 1);
-        removeTiles[1] = _createPlaceOrder(2, 2, 2, 2);
+        IMissionControlExtension.CollectOrder[] memory removeTiles = new IMissionControlExtension.CollectOrder[](2);
+        removeTiles[0] = IMissionControlExtension.CollectOrder(1, 1, 1);
+        removeTiles[1] = IMissionControlExtension.CollectOrder(2, 2, 2);
+        cfaV1Lib.updateFlow(address(missionCtrlStream), superToken1 , 200, abi.encode(addTiles, removeTiles));
+        _checkAppJailed();
+    }
+
+    function testUserUpdateTilesWithoutRemove() public {
+        vm.startPrank(alice);
+        mockMissionCtrl._setMinFlowRate(100); // 100 wei per second for each tile
+        //rent 3 titles
+        IMissionControlExtension.PlaceOrder[] memory tiles = new IMissionControlExtension.PlaceOrder[](3);
+        tiles[0] = _createPlaceOrder(1, 1, 1, 1);
+        tiles[1] = _createPlaceOrder(2, 2, 2, 2);
+        tiles[2] = _createPlaceOrder(3, 3, 3, 3);
+        cfaV1Lib.createFlow(address(missionCtrlStream), superToken1 , 300, abi.encode(tiles));
+        //update to remove 1 tile
+        IMissionControlExtension.PlaceOrder[] memory addTiles = new IMissionControlExtension.PlaceOrder[](1);
+        addTiles[0] = _createPlaceOrder(4, 4, 4, 4);
+        IMissionControlExtension.CollectOrder[] memory removeTiles;
+        cfaV1Lib.updateFlow(address(missionCtrlStream), superToken1 , 400, abi.encode(addTiles, removeTiles));
+        _checkAppJailed();
+    }
+
+    function testUserUpdateTilesOnlyRemove() public {
+        vm.startPrank(alice);
+        mockMissionCtrl._setMinFlowRate(100); // 100 wei per second for each tile
+        //rent 3 titles
+        IMissionControlExtension.PlaceOrder[] memory tiles = new IMissionControlExtension.PlaceOrder[](3);
+        tiles[0] = _createPlaceOrder(1, 1, 1, 1);
+        tiles[1] = _createPlaceOrder(2, 2, 2, 2);
+        tiles[2] = _createPlaceOrder(3, 3, 3, 3);
+        cfaV1Lib.createFlow(address(missionCtrlStream), superToken1 , 300, abi.encode(tiles));
+        // mock don't save states between calls but in this case we want to calculate the right flow rate after remove tiles.
+        mockMissionCtrl._setTilesCount(3);
+        //update to remove 1 tile
+        IMissionControlExtension.PlaceOrder[] memory addTiles;
+        IMissionControlExtension.CollectOrder[] memory removeTiles = new IMissionControlExtension.CollectOrder[](2);
+        removeTiles[0] = IMissionControlExtension.CollectOrder(1, 1, 1);
+        removeTiles[1] = IMissionControlExtension.CollectOrder(2, 2, 2);
         cfaV1Lib.updateFlow(address(missionCtrlStream), superToken1 , 200, abi.encode(addTiles, removeTiles));
         _checkAppJailed();
     }
@@ -218,4 +253,5 @@ contract MissionControlTest is SuperfluidTester {
         cfaV1Lib.deleteFlow(alice, address(missionCtrlStream) , superToken1);
         _checkAppJailed();
     }
+
 }

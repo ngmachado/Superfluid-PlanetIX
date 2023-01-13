@@ -1,7 +1,7 @@
 pragma solidity ^0.8.0;
 
 import {IMissionControlExtension} from "./../../src/interfaces/IMissionControlExtension.sol";
-import "forge-std/Console.sol";
+import "forge-std/console.sol";
 
 
 //Attention: This is a mock contract for testing purposes only. Real implementation is MissionControl.sol external to this repo
@@ -12,6 +12,8 @@ contract MockMissionControl is IMissionControlExtension {
     int96 public minFlowRate;
     address public acceptedToken;
     address public missionControlStream;
+
+    uint256 public tilesCount;
 
     bool revertOnCreate;
     bool revertOnUpdate;
@@ -52,6 +54,10 @@ contract MockMissionControl is IMissionControlExtension {
         revertOnDelete = _revertOnDelete;
     }
 
+    function _setTilesCount(uint256 _tilesCount) public {
+        tilesCount = _tilesCount;
+    }
+
 
     // @dev: Mission control refuse operation by reverting
     function createRentTiles(
@@ -85,10 +91,19 @@ contract MockMissionControl is IMissionControlExtension {
         // should always get old and new flow rate
         require(oldFlowRate != 0, "oldFlowRate should be != 0");
         require(flowRate != 0, "flowRate should be != 0");
+
         // we are mocking the price of the tiles
         uint256 diff = abs(int256(addTiles.length) - int256(removeTiles.length));
         uint256 diffFlowRate = abs(int256(flowRate - oldFlowRate));
-        require(diffFlowRate == diff * uint256(uint96(minFlowRate)), "FlowRate don't match price");
+        // if we set tilesCount, we want to calculate based on past "state"
+        if(tilesCount != 0) {
+            uint256 diffFromSetTiles = tilesCount - removeTiles.length;
+            uint256 diffFlowRateFromSetTiles = abs(int256(flowRate - oldFlowRate));
+            require(diffFlowRateFromSetTiles == diffFromSetTiles * uint256(uint96(minFlowRate)), "FlowRate don't match price");
+        } else {
+            require(diffFlowRate == diff * uint256(uint96(minFlowRate)), "FlowRate don't match price");
+        }
+
         // add tiles if needed
         for(uint256 i = 0; i < addTiles.length; i++) {
             PlaceOrder memory tile = addTiles[i];
