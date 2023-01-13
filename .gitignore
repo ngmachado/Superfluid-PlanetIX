@@ -5,5 +5,5 @@ cache/
 
 .env
 
-artifacts/
+
 deployments/

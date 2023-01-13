@@ -1,0 +1,180 @@
+{
+  "_format": "hh-sol-artifact-1",
+  "contractName": "IMissionControlExtension",
+  "sourceName": "src/interfaces/IMissionControlExtension.sol",
+  "abi": [
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "superToken",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "renter",
+          "type": "address"
+        },
+        {
+          "components": [
+            {
+              "components": [
+                {
+                  "internalType": "int256",
+                  "name": "x",
+                  "type": "int256"
+                },
+                {
+                  "internalType": "int256",
+                  "name": "y",
+                  "type": "int256"
+                },
+                {
+                  "internalType": "int256",
+                  "name": "z",
+                  "type": "int256"
+                }
+              ],
+              "internalType": "struct IMissionControlExtension.CollectOrder",
+              "name": "order",
+              "type": "tuple"
+            },
+            {
+              "internalType": "uint256",
+              "name": "tokenId",
+              "type": "uint256"
+            },
+            {
+              "internalType": "address",
+              "name": "tokenAddress",
+              "type": "address"
+            }
+          ],
+          "internalType": "struct IMissionControlExtension.PlaceOrder[]",
+          "name": "tiles",
+          "type": "tuple[]"
+        },
+        {
+          "internalType": "int96",
+          "name": "flowRate",
+          "type": "int96"
+        }
+      ],
+      "name": "createRentTiles",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "superToken",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "renter",
+          "type": "address"
+        }
+      ],
+      "name": "deleteRentTiles",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "superToken",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "renter",
+          "type": "address"
+        },
+        {
+          "components": [
+            {
+              "components": [
+                {
+                  "internalType": "int256",
+                  "name": "x",
+                  "type": "int256"
+                },
+                {
+                  "internalType": "int256",
+                  "name": "y",
+                  "type": "int256"
+                },
+                {
+                  "internalType": "int256",
+                  "name": "z",
+                  "type": "int256"
+                }
+              ],
+              "internalType": "struct IMissionControlExtension.CollectOrder",
+              "name": "order",
+              "type": "tuple"
+            },
+            {
+              "internalType": "uint256",
+              "name": "tokenId",
+              "type": "uint256"
+            },
+            {
+              "internalType": "address",
+              "name": "tokenAddress",
+              "type": "address"
+            }
+          ],
+          "internalType": "struct IMissionControlExtension.PlaceOrder[]",
+          "name": "addTiles",
+          "type": "tuple[]"
+        },
+        {
+          "components": [
+            {
+              "internalType": "int256",
+              "name": "x",
+              "type": "int256"
+            },
+            {
+              "internalType": "int256",
+              "name": "y",
+              "type": "int256"
+            },
+            {
+              "internalType": "int256",
+              "name": "z",
+              "type": "int256"
+            }
+          ],
+          "internalType": "struct IMissionControlExtension.CollectOrder[]",
+          "name": "removeTiles",
+          "type": "tuple[]"
+        },
+        {
+          "internalType": "int96",
+          "name": "oldFlowRate",
+          "type": "int96"
+        },
+        {
+          "internalType": "int96",
+          "name": "flowRate",
+          "type": "int96"
+        }
+      ],
+      "name": "updateRentTiles",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    }
+  ],
+  "bytecode": "0x",
+  "deployedBytecode": "0x",
+  "linkReferences": {},
+  "deployedLinkReferences": {}
+}
