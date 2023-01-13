@@ -9,13 +9,10 @@ const ISuperToken = require("@superfluid-finance/ethereum-contracts/build/contra
 // price per second for each tile
 const flowRate = "385802469135";
 
-const hostAddress = "0xEB796bdb90fFA0f28255275e16936D25d3418603";
-const cfaAddress = "0x49e565Ed1bdc17F3d220f72DF0857C26FA83F873";
-
 const missionAddress = "0xf2cef2CF8ddc8b8e0E16d7995A58F8aAf435FF24";
 const superTokenAddress = "0x934aedA8514B6d3f1Aa8B0B9f7d050907B6d6EAD";
 
-let cfaV1, host, superApp, wallet, superToken;
+let sf, cfaV1, host, superApp, wallet, superToken;
 
 //NOTE
 //Requires @superfluid-finance/sdk-core and graphql as dependencies
@@ -23,20 +20,26 @@ let cfaV1, host, superApp, wallet, superToken;
 //create an operation, then exec the operation like so:
 //const createFlowOperation = superToken.createFlow({params...}) - note that userData is a param that is passed here
 //await createFlowOperation.exec(signer)
-function INIT() {
+async function INIT() {
 
     if(wallet === undefined) throw("set global wallet first...");
-    host = new ethers.Contract(hostAddress, ISuperfluid.abi, wallet);
-    cfaV1 = new ethers.Contract(cfaAddress, IConstantFlowAgreementV1.abi, wallet);
+    sf = await Framework.create({
+        chainId: (await provider.getNetwork()).chainId,
+        provider
+    });
+    host = sf.contracts.host.connect(wallet);
+    cfaV1 = sf.contracts.cfaV1.connect(wallet);
     superApp = new ethers.Contract(missionAddress, MissionControlStreamABI.abi, wallet);
-    superToken = new ethers.Contract(superTokenAddress, ISuperToken.abi, wallet);
+    //Load the Super Token 
+    //Note that this can also be done by passing the symbol of the super token as a string to sf.loadSuperToken() 
+    //like this: sf.loadSuperToken("DAIx"), etc
+    superToken = await sf.loadSuperToken(superTokenAddress);
 }
 
 const encodePlaceOrder = (x, y, z, tokenId, tokenAddress) => {
     return ethers.utils.defaultAbiCoder.encode( [ "tuple(int256, int256, int256, uint256, address)[]" ],
         [[[x, y, z, tokenId, tokenAddress]]]);
 }
-
 
 (async () => {
     // Configurations
@@ -45,18 +48,8 @@ const encodePlaceOrder = (x, y, z, tokenId, tokenAddress) => {
     var privateKey = "0xPRIVATE_KEY";
     wallet = new ethers.Wallet(privateKey, provider);
 
-    const sf = await Framework.create({
-        chainId: (await provider.getNetwork()).chainId,
-        provider
-    })
-
     // instance contracts
     INIT();
-
-    //Load the Super Token 
-    //Note that this can also be done by passing the symbol of the super token as a string to sf.loadSuperToken() 
-    //like this: sf.loadSuperToken("DAIx"), etc
-    const superToken = await sf.loadSuperToken(superTokenAddress);
 
     //encode userData to send with stream. userData = PlaceOrder[]
     let userData = encodePlaceOrder(0,-2,2, 7, "0xF8a6a111daD517C56942A5BE4521163737003FF8");
