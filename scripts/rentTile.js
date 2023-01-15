@@ -33,9 +33,9 @@ const encodePlaceOrder = (x, y, z, tokenId, tokenAddress) => {
 
 (async () => {
     // Configurations
-    var url = "RPC_URL";
-    var provider = new ethers.providers.JsonRpcProvider(url);
-    var privateKey = "0xPRIVATE_KEY";
+    const url = "RPC_URL";
+    const provider = new ethers.providers.JsonRpcProvider(url);
+    const privateKey = "0xPRIVATE_KEY";
     wallet = new ethers.Wallet(privateKey, provider);
 
     // instance contracts
