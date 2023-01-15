@@ -171,6 +171,7 @@ contract MissionControlTest is SuperfluidTester {
         removeTiles[0] = IMissionControlExtension.CollectOrder(1, 1, 1);
         removeTiles[1] = IMissionControlExtension.CollectOrder(2, 2, 2);
         cfaV1Lib.updateFlow(address(missionCtrlStream), superToken1 , 200, abi.encode(addTiles, removeTiles));
+        mockMissionCtrl._setTilesCount(0);
         _checkAppJailed();
     }
 
