@@ -42,7 +42,7 @@ contract MissionControlStream is SuperAppBase, Ownable {
 
     /* bag struct for local variables to avoid stack too deep error */
     struct RuntimeVars {
-        IMissionControlExtension.PlaceOrder[] addTiles;
+        IMissionControlExtension.CollectOrder[] addTiles;
         IMissionControlExtension.CollectOrder[] removeTiles;
         address player;
         int96 oldFlowRate;
@@ -91,7 +91,7 @@ contract MissionControlStream is SuperAppBase, Ownable {
     {
         newCtx = ctx;
         RuntimeVars memory vars;
-        vars.addTiles = abi.decode(host.decodeCtx(ctx).userData, (IMissionControlExtension.PlaceOrder[]));
+        vars.addTiles = abi.decode(host.decodeCtx(ctx).userData, (IMissionControlExtension.CollectOrder[]));
         if(vars.addTiles.length == 0) revert EmptyTiles();
         vars.player = _getPlayer(agreementData);
         vars.newFlowRate = _getFlowRate(superToken, vars.player);
@@ -131,7 +131,7 @@ contract MissionControlStream is SuperAppBase, Ownable {
         // frontend sends two arrays, addTiles to rent and removeTiles to stop renting
         (vars.addTiles, vars.removeTiles) = abi.decode(host.decodeCtx(ctx).userData,
             (
-             IMissionControlExtension.PlaceOrder[],
+             IMissionControlExtension.CollectOrder[],
              IMissionControlExtension.CollectOrder[]
             )
         );

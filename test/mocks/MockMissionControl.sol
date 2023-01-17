@@ -20,7 +20,7 @@ contract MockMissionControl is IMissionControlExtension {
     bool revertOnDelete;
 
     // save user coordinates, copied from MissionControl contract for testing purposes
-    mapping(address => mapping(int => mapping(int => PlaceOrder))) public rentedTiles;
+    mapping(address => mapping(int => mapping(int => CollectOrder))) public rentedTiles;
 
     // save user termination timestamp
     mapping(address => uint256) public userTerminationTimestamp;
@@ -63,7 +63,7 @@ contract MockMissionControl is IMissionControlExtension {
     function createRentTiles(
         address supertoken,
         address renter,
-        PlaceOrder[] memory tiles,
+        CollectOrder[] memory tiles,
         int96 flowRate
     )
     external override
@@ -72,8 +72,8 @@ contract MockMissionControl is IMissionControlExtension {
         // decide based on tiles min flowRate
         require(mockTilePrice(tiles.length) == flowRate, "FlowRate don't match price");
         for(uint256 i = 0; i < tiles.length; i++) {
-            PlaceOrder memory tile = tiles[i];
-            rentedTiles[renter][tile.order.x][tile.order.y] = tile;
+            CollectOrder memory tile = tiles[i];
+            rentedTiles[renter][tile.x][tile.y] = tile;
         }
     }
 
@@ -81,7 +81,7 @@ contract MockMissionControl is IMissionControlExtension {
     function updateRentTiles(
         address supertoken,
         address renter,
-        PlaceOrder[] memory addTiles,
+        CollectOrder[] memory addTiles,
         CollectOrder[] memory removeTiles,
         int96 oldFlowRate,
         int96 flowRate
@@ -106,8 +106,8 @@ contract MockMissionControl is IMissionControlExtension {
 
         // add tiles if needed
         for(uint256 i = 0; i < addTiles.length; i++) {
-            PlaceOrder memory tile = addTiles[i];
-            rentedTiles[renter][tile.order.x][tile.order.y] = tile;
+            CollectOrder memory tile = addTiles[i];
+            rentedTiles[renter][tile.x][tile.y] = tile;
         }
         // remove tiles if needed
         for(uint256 i = 0; i < removeTiles.length; i++) {
