@@ -18,39 +18,22 @@
         {
           "components": [
             {
-              "components": [
-                {
-                  "internalType": "int256",
-                  "name": "x",
-                  "type": "int256"
-                },
-                {
-                  "internalType": "int256",
-                  "name": "y",
-                  "type": "int256"
-                },
-                {
-                  "internalType": "int256",
-                  "name": "z",
-                  "type": "int256"
-                }
-              ],
-              "internalType": "struct IMissionControlExtension.CollectOrder",
-              "name": "order",
-              "type": "tuple"
+              "internalType": "int256",
+              "name": "x",
+              "type": "int256"
             },
             {
-              "internalType": "uint256",
-              "name": "tokenId",
-              "type": "uint256"
+              "internalType": "int256",
+              "name": "y",
+              "type": "int256"
             },
             {
-              "internalType": "address",
-              "name": "tokenAddress",
-              "type": "address"
+              "internalType": "int256",
+              "name": "z",
+              "type": "int256"
             }
           ],
-          "internalType": "struct IMissionControlExtension.PlaceOrder[]",
+          "internalType": "struct IMissionControlExtension.CollectOrder[]",
           "name": "tiles",
           "type": "tuple[]"
         },
@@ -98,39 +81,22 @@
         {
           "components": [
             {
-              "components": [
-                {
-                  "internalType": "int256",
-                  "name": "x",
-                  "type": "int256"
-                },
-                {
-                  "internalType": "int256",
-                  "name": "y",
-                  "type": "int256"
-                },
-                {
-                  "internalType": "int256",
-                  "name": "z",
-                  "type": "int256"
-                }
-              ],
-              "internalType": "struct IMissionControlExtension.CollectOrder",
-              "name": "order",
-              "type": "tuple"
+              "internalType": "int256",
+              "name": "x",
+              "type": "int256"
             },
             {
-              "internalType": "uint256",
-              "name": "tokenId",
-              "type": "uint256"
+              "internalType": "int256",
+              "name": "y",
+              "type": "int256"
             },
             {
-              "internalType": "address",
-              "name": "tokenAddress",
-              "type": "address"
+              "internalType": "int256",
+              "name": "z",
+              "type": "int256"
             }
           ],
-          "internalType": "struct IMissionControlExtension.PlaceOrder[]",
+          "internalType": "struct IMissionControlExtension.CollectOrder[]",
           "name": "addTiles",
           "type": "tuple[]"
         },

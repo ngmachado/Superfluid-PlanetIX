@@ -8,6 +8,10 @@ import { MissionControlStream } from "./../src/MissionControlStream.sol";
 import { IMissionControlExtension } from "./../src/interfaces/IMissionControlExtension.sol";
 import { MockMissionControl } from "./mocks/MockMissionControl.sol";
 
+import {TransparentUpgradeableProxy} from "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
+import {ProxyAdmin} from "@openzeppelin/contracts/proxy/transparent/ProxyAdmin.sol";
+import { MissionControlStreamV2 } from "./mocks/MissionControlStreamV2.sol";
+
 contract MissionControlTest is SuperfluidTester {
 
     event TerminationCallReverted(address indexed sender);
@@ -23,6 +27,8 @@ contract MissionControlTest is SuperfluidTester {
 
     MockMissionControl mockMissionCtrl;
     MissionControlStream missionCtrlStream;
+    ProxyAdmin adminProxy;
+    TransparentUpgradeableProxy proxy;
 
     constructor() SuperfluidTester(3) {
         vm.startPrank(admin);
@@ -61,9 +67,32 @@ contract MissionControlTest is SuperfluidTester {
 
     function deployMissionControlStream() public {
         vm.startPrank(admin);
-        missionCtrlStream = new MissionControlStream(host, superToken1, superToken2, address(mockMissionCtrl), "");
+
+        //logic contract
+        MissionControlStream missionCtrlStreamLogic = new MissionControlStream();
+        //deploy adminProxy
+        adminProxy = new ProxyAdmin();
+        //deploy proxy
+        proxy = new TransparentUpgradeableProxy(
+            address(missionCtrlStreamLogic),
+            address(adminProxy),
+            abi.encodeWithSignature("initialize(address,address,address,address)", address(host), address(superToken1),address(superToken2),address(mockMissionCtrl))
+        );
+        // we use the proxy as MissionControlStream
+        missionCtrlStream = MissionControlStream(address(proxy));
         mockMissionCtrl._setMissionControlStream(address(missionCtrlStream));
         vm.stopPrank();
+        deployMissionControlStreamV2();
+    }
+
+    // deploy new mission control stream
+    function deployMissionControlStreamV2() public {
+        vm.startPrank(admin);
+        //logic contract
+        MissionControlStreamV2 missionCtrlStreamLogicV2 = new MissionControlStreamV2();
+        adminProxy.upgrade(proxy, address(missionCtrlStreamLogicV2));
+        vm.stopPrank();
+
     }
 
     // helper functions
@@ -78,6 +107,12 @@ contract MissionControlTest is SuperfluidTester {
     // is app jailed
     function _checkAppJailed() public returns (bool) {
         assertFalse(host.isAppJailed(missionCtrlStream), "app is jailed");
+    }
+
+    // check flowRate
+    function _checkFlowRate(ISuperToken t, address sender, int96 flowRate) public {
+        (,int96 flowRate_,,) = cfa.getFlow(t, sender, address(missionCtrlStream));
+        assertEq(flowRate, flowRate_, "flowRate");
     }
 
     function testDeployMissionControleStream() public {
@@ -95,6 +130,8 @@ contract MissionControlTest is SuperfluidTester {
         tiles[1] = _createCollectOrder(2, 2, 2);
         tiles[2] = _createCollectOrder(3, 3, 3);
         cfaV1Lib.createFlow(address(missionCtrlStream), superToken1 , 300, abi.encode(tiles));
+        _checkFlowRate(superToken1, alice, 300);
+        vm.stopPrank();
     }
 
     function testUserUpdateTilesRemove() public {
@@ -106,11 +143,13 @@ contract MissionControlTest is SuperfluidTester {
         tiles[1] = _createCollectOrder(2, 2, 2);
         tiles[2] = _createCollectOrder(3, 3, 3);
         cfaV1Lib.createFlow(address(missionCtrlStream), superToken1 , 300, abi.encode(tiles));
+        _checkFlowRate(superToken1, alice, 300);
         //update to remove 1 tile
         IMissionControlExtension.CollectOrder[] memory addTiles;
         IMissionControlExtension.CollectOrder[] memory removeTiles = new IMissionControlExtension.CollectOrder[](1);
         removeTiles[0] = IMissionControlExtension.CollectOrder(1, 1, 1);
         cfaV1Lib.updateFlow(address(missionCtrlStream), superToken1 , 200, abi.encode(addTiles, removeTiles));
+        _checkFlowRate(superToken1, alice, 200);
         _checkAppJailed();
     }
 
@@ -123,6 +162,7 @@ contract MissionControlTest is SuperfluidTester {
         tiles[1] = _createCollectOrder(2, 2, 2);
         tiles[2] = _createCollectOrder(3, 3, 3);
         cfaV1Lib.createFlow(address(missionCtrlStream), superToken1 , 300, abi.encode(tiles));
+        _checkFlowRate(superToken1, alice, 300);
         //update to remove 1 tile
         IMissionControlExtension.CollectOrder[] memory addTiles = new IMissionControlExtension.CollectOrder[](1);
         addTiles[0] = _createCollectOrder(4, 4, 4);
@@ -130,6 +170,7 @@ contract MissionControlTest is SuperfluidTester {
         removeTiles[0] = IMissionControlExtension.CollectOrder(1, 1, 1);
         removeTiles[1] = IMissionControlExtension.CollectOrder(2, 2, 2);
         cfaV1Lib.updateFlow(address(missionCtrlStream), superToken1 , 200, abi.encode(addTiles, removeTiles));
+        _checkFlowRate(superToken1, alice, 200);
         _checkAppJailed();
     }
 
@@ -142,11 +183,13 @@ contract MissionControlTest is SuperfluidTester {
         tiles[1] = _createCollectOrder(2, 2, 2);
         tiles[2] = _createCollectOrder(3, 3, 3);
         cfaV1Lib.createFlow(address(missionCtrlStream), superToken1 , 300, abi.encode(tiles));
+        _checkFlowRate(superToken1, alice, 300);
         //update to remove 1 tile
         IMissionControlExtension.CollectOrder[] memory addTiles = new IMissionControlExtension.CollectOrder[](1);
         addTiles[0] = _createCollectOrder(4, 4, 4);
         IMissionControlExtension.CollectOrder[] memory removeTiles;
         cfaV1Lib.updateFlow(address(missionCtrlStream), superToken1 , 400, abi.encode(addTiles, removeTiles));
+        _checkFlowRate(superToken1, alice, 400);
         _checkAppJailed();
     }
 
@@ -159,6 +202,7 @@ contract MissionControlTest is SuperfluidTester {
         tiles[1] = _createCollectOrder(2, 2, 2);
         tiles[2] = _createCollectOrder(3, 3, 3);
         cfaV1Lib.createFlow(address(missionCtrlStream), superToken1 , 300, abi.encode(tiles));
+        _checkFlowRate(superToken1, alice, 300);
         // mock don't save states between calls but in this case we want to calculate the right flow rate after remove tiles.
         mockMissionCtrl._setTilesCount(3);
         //update to remove 1 tile
@@ -168,6 +212,7 @@ contract MissionControlTest is SuperfluidTester {
         removeTiles[1] = IMissionControlExtension.CollectOrder(2, 2, 2);
         cfaV1Lib.updateFlow(address(missionCtrlStream), superToken1 , 200, abi.encode(addTiles, removeTiles));
         mockMissionCtrl._setTilesCount(0);
+        _checkFlowRate(superToken1, alice, 200);
         _checkAppJailed();
     }
 
@@ -177,8 +222,9 @@ contract MissionControlTest is SuperfluidTester {
         IMissionControlExtension.CollectOrder[] memory tiles = new IMissionControlExtension.CollectOrder[](1);
         tiles[0] = _createCollectOrder(1, 1, 1);
         cfaV1Lib.createFlow(address(missionCtrlStream), superToken1 , 100, abi.encode(tiles));
-        //vm.warp(1000);
+        _checkFlowRate(superToken1, alice, 100);
         cfaV1Lib.deleteFlow(alice, address(missionCtrlStream) , superToken1);
+        _checkFlowRate(superToken1, alice, 0);
         _checkAppJailed();
     }
 
@@ -209,6 +255,7 @@ contract MissionControlTest is SuperfluidTester {
         cfaV1Lib.createFlow(address(missionCtrlStream), superToken2 , 100, abi.encode(tiles));
         //vm.warp(1000);
         cfaV1Lib.deleteFlow(alice, address(missionCtrlStream) , superToken2);
+        _checkFlowRate(superToken1, alice, 0);
         _checkAppJailed();
     }
 
@@ -237,7 +284,7 @@ contract MissionControlTest is SuperfluidTester {
         _checkAppJailed();
     }
 
-    function testRevertOnDeleteShouldntJail() public
+    function testRevertOnDeleteNotJail() public
     {
         vm.startPrank(alice);
         mockMissionCtrl._setMinFlowRate(100); // 100 wei per second for each tile

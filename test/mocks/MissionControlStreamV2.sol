@@ -8,11 +8,11 @@ import {
 } from "@superfluid-finance/ethereum-contracts/contracts/interfaces/agreements/IConstantFlowAgreementV1.sol";
 import { SuperAppBase } from "@superfluid-finance/ethereum-contracts/contracts/apps/SuperAppBase.sol";
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
-import { IMissionControlExtension } from "./interfaces/IMissionControlExtension.sol";
+import { IMissionControlExtension } from "./../../src/interfaces/IMissionControlExtension.sol";
 
 import { OwnableUpgradeable } from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
-contract MissionControlStream is OwnableUpgradeable, SuperAppBase {
+contract MissionControlStreamV2 is OwnableUpgradeable, SuperAppBase {
 
     error ZeroAddress();
     error NotCFAv1();
@@ -41,6 +41,8 @@ contract MissionControlStream is OwnableUpgradeable, SuperAppBase {
     ISuperToken public acceptedToken2;
     IMissionControlExtension public missionControl;
     bytes32 constant cfaId = keccak256("org.superfluid-finance.agreements.ConstantFlowAgreement.v1");
+    // new storage slot, always add new storage variables at the end
+    uint256 public counter;
 
     /* bag struct for local variables to avoid stack too deep error */
     struct RuntimeVars {
@@ -49,6 +51,16 @@ contract MissionControlStream is OwnableUpgradeable, SuperAppBase {
         address player;
         int96 oldFlowRate;
         int96 newFlowRate;
+    }
+
+    // increment counter by one
+    function increment() public {
+        counter++;
+    }
+
+    // decrement counter by one
+    function decrement() public {
+        counter--;
     }
 
     function initialize(
