@@ -31,7 +31,7 @@ contract UpgradabilityTest is SuperfluidTester {
     MissionControlStream missionCtrlStreamLogic;
     MissionControlStreamV2 missionCtrlStreamLogicV2;
 
-    ProxyAdmin adminProxy;
+    ProxyAdmin proxyAdmin;
     TransparentUpgradeableProxy proxy;
 
     constructor() SuperfluidTester(3) {
@@ -74,12 +74,12 @@ contract UpgradabilityTest is SuperfluidTester {
 
         //logic contract
         missionCtrlStreamLogic = new MissionControlStream();
-        //deploy adminProxy
-        adminProxy = new ProxyAdmin();
+        //deploy proxyAdmin
+        proxyAdmin = new ProxyAdmin();
         //deploy proxy
         proxy = new TransparentUpgradeableProxy(
             address(missionCtrlStreamLogic),
-            address(adminProxy),
+            address(proxyAdmin),
             abi.encodeWithSignature("initialize(address,address,address,address)", address(host), address(superToken1),address(superToken2),address(mockMissionCtrl))
         );
         // we use the proxy as MissionControlStream
@@ -93,7 +93,7 @@ contract UpgradabilityTest is SuperfluidTester {
         vm.startPrank(admin);
         //logic contract
         missionCtrlStreamLogicV2 = new MissionControlStreamV2();
-        adminProxy.upgrade(proxy, address(missionCtrlStreamLogicV2));
+        proxyAdmin.upgrade(proxy, address(missionCtrlStreamLogicV2));
         vm.stopPrank();
 
     }
@@ -125,6 +125,7 @@ contract UpgradabilityTest is SuperfluidTester {
         assertEq(address(missionCtrlStream.acceptedToken2()), address(superToken2));
         assertEq(address(missionCtrlStream.host()), address(host));
         assertEq(address(missionCtrlStream.missionControl()), address(mockMissionCtrl));
+        assertEq(MissionControlStreamV2(address(missionCtrlStream)).counter(), 0);
     }
 
     function testIncrementAndDecrementUpgradedMissionControlStream() public {
@@ -153,7 +154,7 @@ contract UpgradabilityTest is SuperfluidTester {
         //logic contract
         missionCtrlStreamLogicV2 = new MissionControlStreamV2();
         vm.expectRevert("Initializable: contract is already initialized");
-        adminProxy.upgradeAndCall(
+        proxyAdmin.upgradeAndCall(
             proxy,
             address(missionCtrlStreamLogicV2),
             abi.encodeWithSignature("initialize(address,address,address,address)", address(host), address(superToken1),address(superToken2),address(mockMissionCtrl))
@@ -164,18 +165,18 @@ contract UpgradabilityTest is SuperfluidTester {
     // test proxy admin
     function testProxyAdmin() public returns (bool) {
         vm.startPrank(admin);
-        address implementation = adminProxy.getProxyImplementation(proxy);
+        address implementation = proxyAdmin.getProxyImplementation(proxy);
         assertEq(implementation, address(missionCtrlStreamLogic));
         vm.stopPrank();
         // upgrade
         deployMissionControlStreamV2();
         vm.startPrank(admin);
-        implementation = adminProxy.getProxyImplementation(proxy);
+        implementation = proxyAdmin.getProxyImplementation(proxy);
         assertEq(implementation, address(missionCtrlStreamLogicV2));
         // how is admin of proxy
-        assertEq(adminProxy.getProxyAdmin(proxy), address(adminProxy));
+        assertEq(proxyAdmin.getProxyAdmin(proxy), address(proxyAdmin));
         // who is owner of proxyAdmin contract
-        assertEq(adminProxy.owner(), address(admin));
+        assertEq(proxyAdmin.owner(), address(admin));
         vm.stopPrank();
     }
 

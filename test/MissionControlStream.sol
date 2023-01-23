@@ -27,7 +27,7 @@ contract MissionControlTest is SuperfluidTester {
 
     MockMissionControl mockMissionCtrl;
     MissionControlStream missionCtrlStream;
-    ProxyAdmin adminProxy;
+    ProxyAdmin proxyAdmin;
     TransparentUpgradeableProxy proxy;
 
     constructor() SuperfluidTester(3) {
@@ -70,12 +70,12 @@ contract MissionControlTest is SuperfluidTester {
 
         //logic contract
         MissionControlStream missionCtrlStreamLogic = new MissionControlStream();
-        //deploy adminProxy
-        adminProxy = new ProxyAdmin();
+        //deploy proxyAdmin
+        proxyAdmin = new ProxyAdmin();
         //deploy proxy
         proxy = new TransparentUpgradeableProxy(
             address(missionCtrlStreamLogic),
-            address(adminProxy),
+            address(proxyAdmin),
             abi.encodeWithSignature("initialize(address,address,address,address)", address(host), address(superToken1),address(superToken2),address(mockMissionCtrl))
         );
         // we use the proxy as MissionControlStream
@@ -90,7 +90,7 @@ contract MissionControlTest is SuperfluidTester {
         vm.startPrank(admin);
         //logic contract
         MissionControlStreamV2 missionCtrlStreamLogicV2 = new MissionControlStreamV2();
-        adminProxy.upgrade(proxy, address(missionCtrlStreamLogicV2));
+        proxyAdmin.upgrade(proxy, address(missionCtrlStreamLogicV2));
         vm.stopPrank();
 
     }

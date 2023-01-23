@@ -12,6 +12,9 @@ import { IMissionControlExtension } from "./interfaces/IMissionControlExtension.
 
 import { OwnableUpgradeable } from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
+/// @title Mission Control Stream receiver
+/// @author Nuno Axe <@logicB0x>
+/// @notice Upgradable contract
 contract MissionControlStream is OwnableUpgradeable, SuperAppBase {
 
     error ZeroAddress();
@@ -20,6 +23,7 @@ contract MissionControlStream is OwnableUpgradeable, SuperAppBase {
     error NotHost();
     error EmptyTiles();
 
+    // @dev: event signal that a stream was terminated but MissionControl reverted
     event TerminationCallReverted(address indexed sender);
 
     // @dev: function is only called by superfluid contract
@@ -42,7 +46,7 @@ contract MissionControlStream is OwnableUpgradeable, SuperAppBase {
     IMissionControlExtension public missionControl;
     bytes32 constant cfaId = keccak256("org.superfluid-finance.agreements.ConstantFlowAgreement.v1");
 
-    /* bag struct for local variables to avoid stack too deep error */
+    // @dev: bag struct for local variables to avoid stack too deep error
     struct RuntimeVars {
         IMissionControlExtension.CollectOrder[] addTiles;
         IMissionControlExtension.CollectOrder[] removeTiles;
@@ -81,9 +85,9 @@ contract MissionControlStream is OwnableUpgradeable, SuperAppBase {
         );
 
         __Ownable_init();
-
     }
 
+    // @dev: called by Superfluid as a callback after the stream is created
     function afterAgreementCreated(
         ISuperToken superToken,
         address agreementClass,
@@ -107,6 +111,7 @@ contract MissionControlStream is OwnableUpgradeable, SuperAppBase {
         missionControl.createRentTiles(address(superToken), vars.player, vars.addTiles, vars.newFlowRate);
     }
 
+    // @dev: function called by Superfluid as a callback before the stream is updated
     function beforeAgreementUpdated(
         ISuperToken superToken,
         address /*agreementClass*/,
@@ -123,6 +128,7 @@ contract MissionControlStream is OwnableUpgradeable, SuperAppBase {
         cbdata = abi.encode(_getFlowRate(superToken, _getPlayer(agreementData)));
     }
 
+    // @dev: function called by Superfluid as a callback after the stream is updated
     function afterAgreementUpdated(
         ISuperToken superToken,
         address agreementClass,
@@ -159,6 +165,8 @@ contract MissionControlStream is OwnableUpgradeable, SuperAppBase {
         );
     }
 
+    // @dev: function called by Superfluid as a callback after the stream is closed
+    // @notice: A stream can be closed by user intent or by liquidation. Please refer to Superfluid documentation
     function afterAgreementTerminated(
         ISuperToken superToken,
         address agreementClass,
@@ -179,28 +187,32 @@ contract MissionControlStream is OwnableUpgradeable, SuperAppBase {
         return ctx;
     }
 
+    // @dev: get flow rate that user is streaming to this contract
     function getFlowRate(address superToken, address player) public view returns (int96) {
         return _getFlowRate(ISuperToken(superToken), player);
     }
 
-    //approve another address to move SuperToken on behalf of this contract
+    // @dev: approve another address to move SuperToken on behalf of this contract
     function approve(ISuperToken superToken, address to, uint256 amount) public onlyOwner {
         superToken.approve(to, amount);
     }
 
-    // get player from agreement data
+    // @dev: get sender address from agreementData
     function _getPlayer(bytes calldata agreementData) internal pure returns (address player) {
         (player,) = abi.decode(agreementData, (address, address));
     }
 
+    // @dev: get flow rate that user is streaming to this contract
     function _getFlowRate(ISuperToken superToken, address sender) internal view returns (int96 flowRate) {
         (,flowRate,,) = cfa.getFlow(superToken, sender, address(this));
     }
 
+    // @dev: check if superToken is accepted by this contract
     function _isSameToken(ISuperToken superToken) private view returns (bool) {
         return address(superToken) == address(acceptedToken1) || address(superToken) == address(acceptedToken2);
     }
 
+    // @dev: check if agreementClass is CFAv1
     function _isCFAv1(address agreementClass) private view returns (bool) {
         return ISuperAgreement(agreementClass).agreementType() == cfaId;
     }
