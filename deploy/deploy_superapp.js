@@ -1,5 +1,5 @@
 /*
- * Usage: npx hardhat deployToken --network <network>
+ * Usage: npx hardhat deploySuperApp --network <network>
  * Verify: npx hardhat verify --network <network> <contract address>
  *
  * Notes:
@@ -7,37 +7,32 @@
  */
 
 const metadata = require("@superfluid-finance/metadata");
-task("deployToken", "Deploy Pure Super Token")
+
+task("deploySuperApp", "Deploy Super App")
+    .addParam("mission", "Mission Control")
+    .addParam("token1", "Accepted Super Token 1")
+    .addParam("token2", "Accepted Super Token 2")
     .setAction(async (taskArgs, hre) => {
         try {
 
             const chainId = await hre.getChainId();
-            const superTokenFactoryAddr = metadata.networks.filter((item) => item.chainId == chainId)[0]
-                .contractsV1.superTokenFactory;
+            const host = metadata.networks.filter((item) => item.chainId == chainId)[0]
+                .contractsV1.host;
+
             console.log(`network: ${hre.network.name}`);
             console.log(`chainId: ${chainId}`);
             console.log(`rpc: ${hre.network.config.url}`);
-            console.log(`deployer address`, (await hre.ethers.getSigners())[0].address);
-            console.log("superTokenFactory", superTokenFactoryAddr);
+            console.log(`deployer address: ${(await hre.ethers.getSigners())[0].address}`);
+            console.log(`Mission Control: ${taskArgs.mission}`);
+            console.log(`Accepted Super Token 1: ${taskArgs.token1}`);
+            console.log(`Accepted Super Token 2: ${taskArgs.token2}`);
 
-            const superTokenFactory = await hre.ethers.getContractAt(
-                "ISuperTokenFactory",
-                superTokenFactoryAddr
-            );
+            // deploy Super App
+            const MissionControlStream = await hre.ethers.getContractFactory("MissionControlStream");
+            const missionControlStream = await upgrades.deployProxy(MissionControlStream, [host, taskArgs.token1, taskArgs.token2, taskArgs.mission], { kind: "transparent" });
+            console.log("MissionControlStream deployed to:", missionControlStream.address);
 
-            // deploy MintablePureSuperToken Logic Contract
-            const MintablePureSuperToken = await hre.ethers.getContractFactory("MintablePureSuperToken");
-            const mintablePureSuperToken = await MintablePureSuperToken.deploy();
 
-            // initialize MintablePureSuperToken Contract
-            await mintablePureSuperToken.initialize(
-                superTokenFactoryAddr,
-                "Astro Gold Lite",
-                "ALITE",
-                (await hre.ethers.getSigners())[0].address
-            );
-
-            console.log("MintablePureSuperToken deployed to:", mintablePureSuperToken.address);
         } catch (error) {
             console.log(error);
         }

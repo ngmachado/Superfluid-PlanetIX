@@ -1,58 +1,40 @@
 /*
- * Usage: npx hardhat deploy --network <network>
+ * Usage: npx hardhat deployToken --network <network>
+ * Verify: npx hardhat verify --network <network> <contract address>
  *
  * Notes:
  * You need to have a .env file based on .env-template.
- * If verification fails, you can run again this script to verify later.
  */
 
 const metadata = require("@superfluid-finance/metadata");
+task("deployToken", "Deploy Pure Super Token")
+    .setAction(async (taskArgs, hre) => {
+        try {
 
-const sleep = (waitTimeInMs) =>
-    new Promise((resolve) => setTimeout(resolve, waitTimeInMs));
+            const chainId = await hre.getChainId();
+            const superTokenFactoryAddr = metadata.networks.filter((item) => item.chainId == chainId)[0]
+                .contractsV1.superTokenFactory;
+            console.log(`network: ${hre.network.name}`);
+            console.log(`chainId: ${chainId}`);
+            console.log(`rpc: ${hre.network.config.url}`);
+            console.log(`deployer address`, (await hre.ethers.getSigners())[0].address);
+            console.log("superTokenFactory", superTokenFactoryAddr);
 
-module.exports = async function ({ deployments, getNamedAccounts }) {
-    const chainId = await hre.getChainId();
-    const host = metadata.networks.filter((item) => item.chainId == chainId)[0]
-        .contractsV1.host;
-    const registrationKey = "";
-    if (host === undefined) {
-        console.log("Host contract not found for this network");
-        return;
-    }
+            // deploy MintablePureSuperToken Logic Contract
+            const MintablePureSuperToken = await hre.ethers.getContractFactory("MintablePureSuperToken");
+            const mintablePureSuperToken = await MintablePureSuperToken.deploy();
 
-    // AGOLD Token
-    const superTokenA = "0x3CAD7147c15C0864B8cF0EcCca43f98735e6e782";
-    // ALITE Token
-    const superTokenB = "0x39161eb4Ce381d92a472Dfc88dA033700C14D49D";
-    //new MC
-    const missionControl = "0x29295020DaA9D2afBaA6A9bF80E08332Fe8e7a69";
+            // initialize MintablePureSuperToken Contract
+            await mintablePureSuperToken.initialize(
+                superTokenFactoryAddr,
+                "Astro Gold Lite",
+                "ALITE",
+                (await hre.ethers.getSigners())[0].address
+            );
 
-    const { deploy } = deployments;
-    const { deployer } = await getNamedAccounts();
-
-    console.log(`network: ${hre.network.name}`);
-    console.log(`chainId: ${chainId}`);
-    console.log(`rpc: ${hre.network.config.url}`);
-    console.log(`host: ${host}`);
-
-    const MissionControlStream = await deploy("MissionControlStream", {
-        from: deployer,
-        args: [host, superTokenA, superTokenB, missionControl, registrationKey],
-        log: true,
-        skipIfAlreadyDeployed: false,
+            console.log("MintablePureSuperToken deployed to:", mintablePureSuperToken.address);
+        } catch (error) {
+            console.log(error);
+        }
     });
 
-    // wait for 15 seconds to allow etherscan to indexed the contracts
-    await sleep(15000);
-
-    try {
-        await hre.run("verify:verify", {
-            address: MissionControlStream.address,
-            constructorArguments: [host, superTokenA, superTokenB, missionControl, registrationKey],
-            contract: "src/MissionControlStream.sol:MissionControlStream",
-        });
-    } catch (err) {
-        console.error(err);
-    }
-};

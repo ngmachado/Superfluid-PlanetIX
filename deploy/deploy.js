@@ -26,7 +26,7 @@ module.exports = async function ({ deployments, getNamedAccounts }) {
     // ALITE Token
     const superTokenB = "0x39161eb4Ce381d92a472Dfc88dA033700C14D49D";
     //new MC
-    const missionControl = "0x421f672626c253462521AD7616Df4622bbC51523";
+    const missionControl = "0x29295020DaA9D2afBaA6A9bF80E08332Fe8e7a69";
 
     const { deploy } = deployments;
     const { deployer } = await getNamedAccounts();
