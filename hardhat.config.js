@@ -1,8 +1,11 @@
 require("dotenv").config();
 require("@nomiclabs/hardhat-ethers");
 require("@nomiclabs/hardhat-etherscan");
+require('@openzeppelin/hardhat-upgrades');
 require("hardhat-deploy");
 require("hardhat/config");
+require("./deploy/deploy_token");
+require("./deploy/deploy_superapp");
 
 // You need to export an object to set up your config
 // Go to https://hardhat.org/config/ to learn more
