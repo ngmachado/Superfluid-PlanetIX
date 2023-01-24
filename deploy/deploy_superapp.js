@@ -1,5 +1,5 @@
 /*
- * Usage: npx hardhat deploySuperApp --network <network>
+ * Usage: npx hardhat deploySuperApp --network <network> --mission <missionControlAddress> --token1 <SuperToken1Address> --token2 <SuperToken2Address>
  * Verify: npx hardhat verify --network <network> <contract address>
  *
  * Notes:
