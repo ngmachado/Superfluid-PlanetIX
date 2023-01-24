@@ -2,6 +2,7 @@ pragma solidity ^0.8.0;
 
 import "forge-std/Console.sol";
 import { ISuperToken } from "@superfluid-finance/ethereum-contracts/contracts/interfaces/superfluid/ISuperToken.sol";
+import { ISuperApp } from "@superfluid-finance/ethereum-contracts/contracts/interfaces/superfluid/ISuperApp.sol";
 import { SuperfluidFrameworkDeployer, SuperfluidTester, Superfluid, ConstantFlowAgreementV1, CFAv1Library } from "./utils/SuperfluidTester.sol";
 import { ERC1820RegistryCompiled } from "@superfluid-finance/ethereum-contracts/contracts/libs/ERC1820RegistryCompiled.sol";
 import { MissionControlStream } from "./../src/MissionControlStream.sol";
@@ -82,16 +83,6 @@ contract MissionControlTest is SuperfluidTester {
         missionCtrlStream = MissionControlStream(address(proxy));
         mockMissionCtrl._setMissionControlStream(address(missionCtrlStream));
         vm.stopPrank();
-        deployMissionControlStreamV2();
-    }
-
-    // deploy new mission control stream
-    function deployMissionControlStreamV2() public {
-        vm.startPrank(admin);
-        //logic contract
-        MissionControlStreamV2 missionCtrlStreamLogicV2 = new MissionControlStreamV2();
-        proxyAdmin.upgrade(proxy, address(missionCtrlStreamLogicV2));
-        vm.stopPrank();
 
     }
 
@@ -106,7 +97,12 @@ contract MissionControlTest is SuperfluidTester {
 
     // is app jailed
     function _checkAppJailed() public returns (bool) {
+        require(_isSuperApp(), "not super app");
         assertFalse(host.isAppJailed(missionCtrlStream), "app is jailed");
+    }
+
+    function _isSuperApp() public view returns (bool) {
+        return host.isApp(ISuperApp(address(missionCtrlStream)));
     }
 
     // check flowRate
@@ -120,11 +116,13 @@ contract MissionControlTest is SuperfluidTester {
         assertEq(address(missionCtrlStream.acceptedToken2()), address(superToken2));
         assertEq(address(missionCtrlStream.host()), address(host));
         assertEq(address(missionCtrlStream.missionControl()), address(mockMissionCtrl));
+        assertEq(missionCtrlStream.owner(), admin);
     }
 
     function testUserRentTiles() public {
         vm.startPrank(alice);
         mockMissionCtrl._setMinFlowRate(100); // 100 wei per second for each tile
+        mockMissionCtrl._setExpectedRenter(alice); // alice is the player
         IMissionControlExtension.CollectOrder[] memory tiles = new IMissionControlExtension.CollectOrder[](3);
         tiles[0] = _createCollectOrder(1, 1, 1);
         tiles[1] = _createCollectOrder(2, 2, 2);
@@ -148,6 +146,7 @@ contract MissionControlTest is SuperfluidTester {
         IMissionControlExtension.CollectOrder[] memory addTiles;
         IMissionControlExtension.CollectOrder[] memory removeTiles = new IMissionControlExtension.CollectOrder[](1);
         removeTiles[0] = IMissionControlExtension.CollectOrder(1, 1, 1);
+        mockMissionCtrl._setExpectedRenter(alice);
         cfaV1Lib.updateFlow(address(missionCtrlStream), superToken1 , 200, abi.encode(addTiles, removeTiles));
         _checkFlowRate(superToken1, alice, 200);
         _checkAppJailed();
@@ -219,6 +218,7 @@ contract MissionControlTest is SuperfluidTester {
     function testUserUpdateTilesAddAndTerminate() public {
         vm.startPrank(alice);
         mockMissionCtrl._setMinFlowRate(100); // 100 wei per second for each tile
+        mockMissionCtrl._setExpectedRenter(alice);
         IMissionControlExtension.CollectOrder[] memory tiles = new IMissionControlExtension.CollectOrder[](1);
         tiles[0] = _createCollectOrder(1, 1, 1);
         cfaV1Lib.createFlow(address(missionCtrlStream), superToken1 , 100, abi.encode(tiles));
@@ -268,6 +268,7 @@ contract MissionControlTest is SuperfluidTester {
         tiles[0] = _createCollectOrder(1, 1, 1);
         vm.expectRevert("MockMissionControl: revertOnCreate");
         cfaV1Lib.createFlow(address(missionCtrlStream), superToken1 , 100, abi.encode(tiles));
+        _checkFlowRate(superToken1, alice, 0);
         _checkAppJailed();
     }
 
@@ -297,5 +298,4 @@ contract MissionControlTest is SuperfluidTester {
         cfaV1Lib.deleteFlow(alice, address(missionCtrlStream) , superToken1);
         _checkAppJailed();
     }
-
 }
