@@ -10,16 +10,16 @@ import {ITrustedMintable} from "./ITrustedMintable.sol";
 /// @title Minimal Pure Super Token
 /// @author jtriley.eth changed by shinra-corp.eth
 /// @notice No pre-minted supply.
-contract MintablePureSuperToken is SuperTokenBase, ITrustedMintable, Ownable {
+contract GoldLiteProxy is SuperTokenBase, ITrustedMintable, Ownable {
 
-    mapping(address => bool) private s_trustedAddresses;
+    mapping(address => bool) private s_trustedAddresses; // slot id =sha3("s_trustedAddresses", address) mappiung[xxxxx] || d =sha3("s_trustedAddresses2", address) mappiung[xxxxx]
 
     //Modifiers
     modifier onlyTrusted() {
         if (!s_trustedAddresses[msg.sender]) revert ITrustedMintable.TM__NotTrusted(msg.sender);
         _;
     }
-    
+
 	/// @dev Upgrades the super token with the factory, then initializes.
     /// @param factory super token factory for initialization
 	/// @param name super token name
