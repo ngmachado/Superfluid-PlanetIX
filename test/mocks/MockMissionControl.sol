@@ -25,12 +25,19 @@ contract MockMissionControl is IMissionControlExtension {
     // save user termination timestamp
     mapping(address => uint256) public userTerminationTimestamp;
 
+    // expected renter
+    address public expectedRenter;
+
     function _setAcceptedToken(address _acceptedToken) public {
         acceptedToken = _acceptedToken;
     }
 
     function _setMinFlowRate(int96 _minFlowRate) public {
         minFlowRate = _minFlowRate;
+    }
+
+    function _setExpectedRenter(address _expectedRenter) public {
+        expectedRenter = _expectedRenter;
     }
 
     function _setMissionControlStream(address _missionControlStream) public {
@@ -69,6 +76,7 @@ contract MockMissionControl is IMissionControlExtension {
     external override
     {
         if(revertOnCreate) revert("MockMissionControl: revertOnCreate");
+        if(expectedRenter != address(0) && expectedRenter != renter) revert("MockMissionControl: expectedRenter");
         // decide based on tiles min flowRate
         require(mockTilePrice(tiles.length) == flowRate, "FlowRate don't match price");
         for(uint256 i = 0; i < tiles.length; i++) {
@@ -91,6 +99,7 @@ contract MockMissionControl is IMissionControlExtension {
         // should always get old and new flow rate
         require(oldFlowRate != 0, "oldFlowRate should be != 0");
         require(flowRate != 0, "flowRate should be != 0");
+        if(expectedRenter != address(0) && expectedRenter != renter) revert("MockMissionControl: expectedRenter");
 
         // we are mocking the price of the tiles
         uint256 diff = abs(int256(addTiles.length) - int256(removeTiles.length));
@@ -122,6 +131,7 @@ contract MockMissionControl is IMissionControlExtension {
     ) external override
     {
         if(revertOnDelete) revert("MockMissionControl: revertOnDelete");
+        if(expectedRenter != address(0) && expectedRenter != renter) revert("MockMissionControl: expectedRenter");
         // set timestamp
         userTerminationTimestamp[renter] = block.timestamp;
     }
