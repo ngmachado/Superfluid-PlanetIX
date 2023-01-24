@@ -34,7 +34,7 @@ contract MissionControlStream is OwnableUpgradeable, SuperAppBase {
 
     // @dev: function can only called if reacting to a CFA stream and super token are allowed
     modifier onlyExpected(ISuperToken superToken, address agreementClass) {
-        if(!_isSameToken(superToken)) revert NotSuperToken();
+        if(!_isAcceptedToken(superToken)) revert NotSuperToken();
         if(!_isCFAv1(agreementClass)) revert NotCFAv1();
         _;
     }
@@ -125,7 +125,8 @@ contract MissionControlStream is OwnableUpgradeable, SuperAppBase {
     override
     returns (bytes memory cbdata)
     {
-        cbdata = abi.encode(_getFlowRate(superToken, _getPlayer(agreementData)));
+        address player = _getPlayer(agreementData);
+        cbdata = abi.encode(_getFlowRate(superToken, player), player);
     }
 
     // @dev: function called by Superfluid as a callback after the stream is updated
@@ -150,9 +151,8 @@ contract MissionControlStream is OwnableUpgradeable, SuperAppBase {
             )
         );
         if(vars.addTiles.length == 0 && vars.removeTiles.length == 0) revert EmptyTiles();
-        vars.player = _getPlayer(agreementData);
-        // decode old flow rate from callback data
-        vars.oldFlowRate = abi.decode(cbdata, (int96));
+        // decode old flow rate and player address from callback data
+        (vars.oldFlowRate, vars.player) = abi.decode(cbdata, (int96, address));
         vars.newFlowRate = _getFlowRate(superToken, vars.player);
         // @dev: if missionControl don't want to rent by any reason, it should revert
         missionControl.updateRentTiles(
@@ -175,7 +175,7 @@ contract MissionControlStream is OwnableUpgradeable, SuperAppBase {
         bytes calldata, /*cbdata*/
         bytes calldata ctx
     ) external override onlyHost returns (bytes memory) {
-        if (!_isSameToken(superToken) || !_isCFAv1(agreementClass)) {
+        if (!_isAcceptedToken(superToken) || !_isCFAv1(agreementClass)) {
             return ctx;
         }
 
@@ -208,7 +208,7 @@ contract MissionControlStream is OwnableUpgradeable, SuperAppBase {
     }
 
     // @dev: check if superToken is accepted by this contract
-    function _isSameToken(ISuperToken superToken) private view returns (bool) {
+    function _isAcceptedToken(ISuperToken superToken) private view returns (bool) {
         return address(superToken) == address(acceptedToken1) || address(superToken) == address(acceptedToken2);
     }
 
