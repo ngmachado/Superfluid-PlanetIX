@@ -21,18 +21,18 @@ task("deployToken", "Deploy Pure Super Token")
             console.log("superTokenFactory", superTokenFactoryAddr);
 
             // deploy MintablePureSuperToken Logic Contract
-            const MintablePureSuperToken = await hre.ethers.getContractFactory("MintablePureSuperToken");
-            const mintablePureSuperToken = await MintablePureSuperToken.deploy();
+            const GoldLiteProxy = await hre.ethers.getContractFactory("GoldLiteProxy");
+            const goldLiteProxy = await GoldLiteProxy.deploy();
 
             // initialize MintablePureSuperToken Contract
-            await mintablePureSuperToken.initialize(
+            await goldLiteProxy.initialize(
                 superTokenFactoryAddr,
                 "Astro Gold Lite",
                 "ALITE",
                 (await hre.ethers.getSigners())[0].address
             );
 
-            console.log("MintablePureSuperToken deployed to:", mintablePureSuperToken.address);
+            console.log("GoldLiteProxy deployed to:", goldLiteProxy.address);
         } catch (error) {
             console.log(error);
         }
