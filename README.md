@@ -34,6 +34,11 @@ npx hardhat deploySuperApp --network <network> --mission <missionControlAddress>
 npx hardhat verify --network <network> <SuperAppAddress>
 ```
 
+### Upgrading SuperApp
+    
+```bash
+npx hardhat upgradeSuperApp --network <network> --superApp <superAppAddr>
+```
 
 ### Deploying SuperToken & Verifying
 
