@@ -7,3 +7,5 @@ cache/
 
 
 deployments/
+
+.DS_Store
