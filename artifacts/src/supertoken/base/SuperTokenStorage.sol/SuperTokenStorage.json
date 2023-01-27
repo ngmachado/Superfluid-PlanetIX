@@ -1,7 +1,7 @@
 {
   "_format": "hh-sol-artifact-1",
   "contractName": "SuperTokenStorage",
-  "sourceName": "src/SuperToken/base/SuperTokenStorage.sol",
+  "sourceName": "src/supertoken/base/SuperTokenStorage.sol",
   "abi": [],
   "bytecode": "0x",
   "deployedBytecode": "0x",

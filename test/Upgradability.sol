@@ -5,7 +5,7 @@ import { ISuperToken } from "@superfluid-finance/ethereum-contracts/contracts/in
 import { SuperfluidFrameworkDeployer, SuperfluidTester, Superfluid, ConstantFlowAgreementV1, CFAv1Library } from "./utils/SuperfluidTester.sol";
 import { ERC1820RegistryCompiled } from "@superfluid-finance/ethereum-contracts/contracts/libs/ERC1820RegistryCompiled.sol";
 import { MissionControlStream } from "./../src/MissionControlStream.sol";
-import { IMissionControlExtension } from "./../src/interfaces/IMissionControlExtension.sol";
+import { IMissionControlExtension } from "./../src/interface/IMissionControlExtension.sol";
 import { MockMissionControl } from "./mocks/MockMissionControl.sol";
 
 import { TransparentUpgradeableProxy } from "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";

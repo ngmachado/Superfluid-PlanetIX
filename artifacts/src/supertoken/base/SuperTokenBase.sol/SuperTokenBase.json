@@ -1,7 +1,7 @@
 {
   "_format": "hh-sol-artifact-1",
   "contractName": "SuperTokenBase",
-  "sourceName": "src/SuperToken/base/SuperTokenBase.sol",
+  "sourceName": "src/supertoken/base/SuperTokenBase.sol",
   "abi": [
     {
       "inputs": [],

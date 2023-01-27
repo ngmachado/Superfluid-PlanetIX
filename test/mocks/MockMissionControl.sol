@@ -1,6 +1,6 @@
 pragma solidity ^0.8.0;
 
-import {IMissionControlExtension} from "./../../src/interfaces/IMissionControlExtension.sol";
+import {IMissionControlExtension} from "./../../src/interface/IMissionControlExtension.sol";
 import "forge-std/console.sol";
 
 

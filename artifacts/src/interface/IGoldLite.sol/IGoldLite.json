@@ -1,7 +1,7 @@
 {
   "_format": "hh-sol-artifact-1",
   "contractName": "IGoldLite",
-  "sourceName": "src/interfaces/IGoldLite.sol",
+  "sourceName": "src/interface/IGoldLite.sol",
   "abi": [
     {
       "inputs": [],
