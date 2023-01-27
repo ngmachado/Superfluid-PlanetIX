@@ -12,7 +12,7 @@ import {ITrustedMintable} from "./ITrustedMintable.sol";
 /// @notice No pre-minted supply.
 contract GoldLiteProxy is SuperTokenBase, ITrustedMintable, Ownable {
 
-    mapping(address => bool) private s_trustedAddresses; // slot id =sha3("s_trustedAddresses", address) mappiung[xxxxx] || d =sha3("s_trustedAddresses2", address) mappiung[xxxxx]
+    mapping(address => bool) private s_trustedAddresses;
 
     //Modifiers
     modifier onlyTrusted() {
