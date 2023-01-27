@@ -81,7 +81,7 @@ contract MissionControlStream is OwnableUpgradeable, SuperAppBase {
             SuperAppDefinitions.APP_LEVEL_FINAL |
             SuperAppDefinitions.BEFORE_AGREEMENT_CREATED_NOOP |
             SuperAppDefinitions.BEFORE_AGREEMENT_TERMINATED_NOOP,
-            ""
+            "k1"
         );
 
         __Ownable_init();
