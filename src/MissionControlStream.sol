@@ -134,7 +134,7 @@ contract MissionControlStream is OwnableUpgradeable, SuperAppBase {
         ISuperToken superToken,
         address agreementClass,
         bytes32 /*agreementId*/,
-        bytes calldata agreementData,
+        bytes calldata /*agreementData*/,
         bytes calldata cbdata,
         bytes calldata ctx
     ) external override
@@ -195,6 +195,12 @@ contract MissionControlStream is OwnableUpgradeable, SuperAppBase {
     // @dev: approve another address to move SuperToken on behalf of this contract
     function approve(ISuperToken superToken, address to, uint256 amount) public onlyOwner {
         superToken.approve(to, amount);
+    }
+
+    // @dev: set missionControl address
+    function setMissionControl(address _missionControl) public onlyOwner {
+        if(_missionControl == address(0)) revert ZeroAddress();
+        missionControl = IMissionControlExtension(_missionControl);
     }
 
     // @dev: get sender address from agreementData
