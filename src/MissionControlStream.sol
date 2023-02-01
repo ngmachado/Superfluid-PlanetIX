@@ -9,6 +9,7 @@ import {
 import { SuperAppBase } from "@superfluid-finance/ethereum-contracts/contracts/apps/SuperAppBase.sol";
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 import { IMissionControlExtension } from "./interface/IMissionControlExtension.sol";
+import { IMCCrosschainServices } from "./interface/IMCCrosschainServices.sol";
 
 import { OwnableUpgradeable } from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
@@ -45,6 +46,8 @@ contract MissionControlStream is OwnableUpgradeable, SuperAppBase {
     ISuperToken public acceptedToken2;
     IMissionControlExtension public missionControl;
     bytes32 constant cfaId = keccak256("org.superfluid-finance.agreements.ConstantFlowAgreement.v1");
+    IMCCrosschainServices public crosschainServices;
+
 
     // @dev: bag struct for local variables to avoid stack too deep error
     struct RuntimeVars {
@@ -201,6 +204,18 @@ contract MissionControlStream is OwnableUpgradeable, SuperAppBase {
     function setMissionControl(address _missionControl) public onlyOwner {
         if(_missionControl == address(0)) revert ZeroAddress();
         missionControl = IMissionControlExtension(_missionControl);
+    }
+
+    // @dev: set crosschainServices address
+    function setCrosschainServices(address _crosschainServices) public onlyOwner {
+        if(_crosschainServices == address(0)) revert ZeroAddress();
+        crosschainServices = IMCCrosschainServices(_crosschainServices);
+    }
+
+    // @dev: Genesis nft holder should call this function to rent tiles
+    function createRentTilesGenesis(IMissionControlExtension.CollectOrder[] calldata addTiles) public {
+        require(crosschainServices.getNewlandsGenesisBalance(msg.sender) != 0);
+        missionControl.createRentTiles(address(acceptedToken1), msg.sender, addTiles, 0);
     }
 
     // @dev: get sender address from agreementData
