@@ -49,11 +49,11 @@ npx hardhat verify --network <network> <SuperTokenAddress>
 ```
 
 ### Table of Contracts
-| Contract | Description                                                 |
-| --- |-------------------------------------------------------------|
-| `MissionControlStream` | SuperApp for streaming a game and renting tiles on PlanetIX |
+| Contract                   | Description                                                 |
+|----------------------------|-------------------------------------------------------------|
+| `MissionControlStream`     | SuperApp for streaming a game and renting tiles on PlanetIX |
 | `IMissionControlExtension` | Interface for the PlanetIX MissionControl contract          |
-| `MintablePureSuperToken` | SuperToken that can be minted by the trusted minter         |
+| `GoldLiteProxy`            | SuperToken that can be minted by the trusted minter         |
 
 
 ### Upgradable Contracts
@@ -64,7 +64,21 @@ The `MissionControlStream` contract is upgradable, using Transparent Proxy, the 
 ### Approve - Funds Controller
 Allows the contract owner to approve another address to move the ISuperToken contract on behalf of the MissionControlStream contract.
 
+### Deployed Contracts
+| Contract               | Network | Address                                                                                                                  |
+|------------------------|---------|--------------------------------------------------------------------------------------------------------------------------|
+| `MissionControlStream` | Polygon | [0xb9d70840cca6e6f71d3c884060ee123e13b4c27d](https://polygonscan.com/address/address/0xb9d70840cca6e6f71d3c884060ee123e13b4c27d)  |
+| `SuperToken AGOLD`     | Polygon | [0xfac83774854237b6e31c4b051b91015e403956d3](https://polygonscan.com/address/0xfac83774854237b6e31c4b051b91015e403956d3)    |
+| `SuperToken ALITE`     | Polygon | [0x9308A7116106269eB11834dF494eFd00d244cF8e](https://polygonscan.com/address/0x9308A7116106269eB11834dF494eFd00d244cF8e) |
+
+## Renting Tiles
+[![Renting Tiles](img/basic_interaction.png)](img/basic_interaction.png)
+
+## User Operations
+[![User Crud](img/user_crud_operations.png)](img/user_crud_operations.png)
+
+## Global Overview
+[![Global Overview](img/overview.png)](img/overview.png)
 
 
-## Global Architecture
-[![Global Architecture](img/baseDiagram.png)](img/baseDiagram.png)
+
