@@ -8,7 +8,7 @@ import {
 } from "@superfluid-finance/ethereum-contracts/contracts/interfaces/agreements/IConstantFlowAgreementV1.sol";
 import { SuperAppBase } from "@superfluid-finance/ethereum-contracts/contracts/apps/SuperAppBase.sol";
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
-import { IMissionControlExtension } from "./../../src/interfaces/IMissionControlExtension.sol";
+import { IMissionControlExtension } from "./../../src/Interfaces/IMissionControlExtension.sol";
 
 import { OwnableUpgradeable } from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 

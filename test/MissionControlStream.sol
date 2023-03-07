@@ -1,11 +1,11 @@
 pragma solidity ^0.8.0;
 
-import "forge-std/Console.sol";
+import "forge-std/console.sol";
 import { ISuperToken } from "@superfluid-finance/ethereum-contracts/contracts/interfaces/superfluid/ISuperToken.sol";
 import { SuperfluidFrameworkDeployer, SuperfluidTester, Superfluid, ConstantFlowAgreementV1, CFAv1Library } from "./utils/SuperfluidTester.sol";
 import { ERC1820RegistryCompiled } from "@superfluid-finance/ethereum-contracts/contracts/libs/ERC1820RegistryCompiled.sol";
 import { MissionControlStream } from "./../src/MissionControlStream.sol";
-import { IMissionControlExtension } from "./../src/interfaces/IMissionControlExtension.sol";
+import { IMissionControlExtension } from "./../src/Interfaces/IMissionControlExtension.sol";
 import { MockMissionControl } from "./mocks/MockMissionControl.sol";
 
 import {TransparentUpgradeableProxy} from "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
